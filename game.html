@@ -396,11 +396,15 @@
             enemy_shadowlord_idle: null,
             enemy_shadowlord_float1: null,
             enemy_shadowlord_float2: null,
-            enemy_shadowlord_attack: null
+            enemy_shadowlord_attack: null,
+            // Background images
+            bg_level1_cemetery: null,
+            bg_level2_forge: null,
+            bg_level3_abyss: null
         };
         
         let assetsLoaded = 0;
-        const totalAssets = 21; // 4 player sprites + 16 enemy sprites + 1 title screen
+        const totalAssets = 24; // 4 player sprites + 16 enemy sprites + 1 title screen + 3 backgrounds
         
         function loadImage(src) {
             return new Promise((resolve, reject) => {
@@ -448,6 +452,11 @@
             sprites.enemy_shadowlord_float1 = await loadImage('enemy_shadowlord_float1.png');
             sprites.enemy_shadowlord_float2 = await loadImage('enemy_shadowlord_float2.png');
             sprites.enemy_shadowlord_attack = await loadImage('enemy_shadowlord_attack.png');
+            
+            // Load background images
+            sprites.bg_level1_cemetery = await loadImage('bg_level1_cemetery.png');
+            sprites.bg_level2_forge = await loadImage('bg_level2_forge.png');
+            sprites.bg_level3_abyss = await loadImage('bg_level3_abyss.png');
             
             // Wait for title screen image to load (if not already loaded)
             const titleBg = document.getElementById('titleBg');
@@ -1279,29 +1288,36 @@
         // ============================================
         
         function drawBackground(ctx) {
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            
+            // Draw the appropriate background image based on current level
+            let bgImage = null;
             switch(currentLevel) {
-                case 1: // Cemetery
-                    gradient.addColorStop(0, '#0a0a1a');
-                    gradient.addColorStop(0.5, '#1a0a2e');
-                    gradient.addColorStop(1, '#0d1a0d');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw tombstones
-                    ctx.fillStyle = '#1a1a2e';
-                    for (let i = 0; i < 8; i++) {
-                        const x = (i * 150 + 50) % canvas.width;
-                        const y = 350 + (i % 3) * 50;
-                        ctx.fillRect(x, y, 40, 60);
-                        ctx.beginPath();
-                        ctx.arc(x + 20, y, 20, Math.PI, 0);
-                        ctx.fill();
-                    }
-                    
-                    // Fog
-                    ctx.fillStyle = 'rgba(100, 100, 120, 0.1)';
+                case 1:
+                    bgImage = sprites.bg_level1_cemetery;
+                    break;
+                case 2:
+                    bgImage = sprites.bg_level2_forge;
+                    break;
+                case 3:
+                    bgImage = sprites.bg_level3_abyss;
+                    break;
+            }
+            
+            // Draw the background image covering the full canvas
+            if (bgImage) {
+                ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Fallback gradient if image not loaded
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, '#0a0a1a');
+                gradient.addColorStop(1, '#1a0a2e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Overlay atmospheric particle effects
+            switch(currentLevel) {
+                case 1: // Cemetery - Fog effect
+                    ctx.fillStyle = 'rgba(100, 100, 120, 0.08)';
                     for (let i = 0; i < 5; i++) {
                         const x = (Date.now() / 50 + i * 200) % (canvas.width + 200) - 100;
                         ctx.beginPath();
@@ -1310,64 +1326,22 @@
                     }
                     break;
                     
-                case 2: // Hell's Forge
-                    gradient.addColorStop(0, '#1a0000');
-                    gradient.addColorStop(0.3, '#2a0a0a');
-                    gradient.addColorStop(0.7, '#4a1a00');
-                    gradient.addColorStop(1, '#ff4400');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Lava cracks
-                    ctx.strokeStyle = '#ff6600';
-                    ctx.lineWidth = 3;
-                    ctx.shadowColor = '#ff0000';
-                    ctx.shadowBlur = 10;
-                    for (let i = 0; i < 10; i++) {
-                        const x = i * 100 + 50;
-                        ctx.beginPath();
-                        ctx.moveTo(x, canvas.height);
-                        ctx.lineTo(x + Math.sin(Date.now() / 500 + i) * 30, canvas.height - 100 - i * 20);
-                        ctx.stroke();
-                    }
-                    ctx.shadowBlur = 0;
-                    
-                    // Embers
+                case 2: // Hell's Forge - Embers
                     ctx.fillStyle = '#ff6600';
                     for (let i = 0; i < 20; i++) {
                         const x = (Date.now() / 20 + i * 50) % canvas.width;
                         const y = (Date.now() / 30 + i * 73) % canvas.height;
-                        ctx.fillRect(x, y, 3, 3);
+                        const size = 2 + Math.random() * 2;
+                        ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+                        ctx.fillRect(x, y, size, size);
                     }
+                    ctx.globalAlpha = 1.0;
                     break;
                     
-                case 3: // Abyssal Throne
-                    gradient.addColorStop(0, '#000000');
-                    gradient.addColorStop(0.5, '#0a001a');
-                    gradient.addColorStop(1, '#1a0033');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Void portals
-                    for (let i = 0; i < 3; i++) {
-                        const x = 200 + i * 300;
-                        const y = 200 + (i % 2) * 200;
-                        const pulse = 1 + Math.sin(Date.now() / 200 + i) * 0.2;
-                        
-                        const portalGrad = ctx.createRadialGradient(x, y, 0, x, y, 80 * pulse);
-                        portalGrad.addColorStop(0, '#000');
-                        portalGrad.addColorStop(0.5, '#4a0080');
-                        portalGrad.addColorStop(1, 'transparent');
-                        
-                        ctx.fillStyle = portalGrad;
-                        ctx.beginPath();
-                        ctx.arc(x, y, 80 * pulse, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    // Lightning
+                case 3: // Abyssal Throne - Lightning and void energy
+                    // Occasional lightning flash
                     if (Math.random() < 0.02) {
-                        ctx.strokeStyle = '#ff00ff';
+                        ctx.strokeStyle = 'rgba(255, 0, 255, 0.6)';
                         ctx.lineWidth = 2;
                         ctx.shadowColor = '#ff00ff';
                         ctx.shadowBlur = 20;
@@ -1382,6 +1356,17 @@
                         }
                         ctx.stroke();
                         ctx.shadowBlur = 0;
+                    }
+                    
+                    // Void particles
+                    ctx.fillStyle = 'rgba(138, 43, 226, 0.4)';
+                    for (let i = 0; i < 15; i++) {
+                        const x = (Date.now() / 40 + i * 67) % canvas.width;
+                        const y = (Date.now() / 25 + i * 89) % canvas.height;
+                        const size = 1 + Math.random() * 3;
+                        ctx.beginPath();
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        ctx.fill();
                     }
                     break;
             }
