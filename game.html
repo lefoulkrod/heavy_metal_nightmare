@@ -379,11 +379,28 @@
             player_idle: null,
             player_attack: null,
             player_walk1: null,
-            player_walk2: null
+            player_walk2: null,
+            // Enemy sprites
+            enemy_skeleton_idle: null,
+            enemy_skeleton_walk1: null,
+            enemy_skeleton_walk2: null,
+            enemy_skeleton_attack: null,
+            enemy_imp_idle: null,
+            enemy_imp_fly1: null,
+            enemy_imp_fly2: null,
+            enemy_imp_attack: null,
+            enemy_hellknight_idle: null,
+            enemy_hellknight_walk1: null,
+            enemy_hellknight_walk2: null,
+            enemy_hellknight_attack: null,
+            enemy_shadowlord_idle: null,
+            enemy_shadowlord_float1: null,
+            enemy_shadowlord_float2: null,
+            enemy_shadowlord_attack: null
         };
         
         let assetsLoaded = 0;
-        const totalAssets = 5; // 4 player sprites + title screen
+        const totalAssets = 21; // 4 player sprites + 16 enemy sprites + 1 title screen
         
         function loadImage(src) {
             return new Promise((resolve, reject) => {
@@ -407,6 +424,30 @@
             sprites.player_attack = await loadImage('player_attack.png');
             sprites.player_walk1 = await loadImage('player_walk1.png');
             sprites.player_walk2 = await loadImage('player_walk2.png');
+            
+            // Load Skeleton enemy sprites
+            sprites.enemy_skeleton_idle = await loadImage('enemy_skeleton_idle.png');
+            sprites.enemy_skeleton_walk1 = await loadImage('enemy_skeleton_walk1.png');
+            sprites.enemy_skeleton_walk2 = await loadImage('enemy_skeleton_walk2.png');
+            sprites.enemy_skeleton_attack = await loadImage('enemy_skeleton_attack.png');
+            
+            // Load Imp enemy sprites
+            sprites.enemy_imp_idle = await loadImage('enemy_imp_idle.png');
+            sprites.enemy_imp_fly1 = await loadImage('enemy_imp_fly1.png');
+            sprites.enemy_imp_fly2 = await loadImage('enemy_imp_fly2.png');
+            sprites.enemy_imp_attack = await loadImage('enemy_imp_attack.png');
+            
+            // Load Hell Knight enemy sprites
+            sprites.enemy_hellknight_idle = await loadImage('enemy_hellknight_idle.png');
+            sprites.enemy_hellknight_walk1 = await loadImage('enemy_hellknight_walk1.png');
+            sprites.enemy_hellknight_walk2 = await loadImage('enemy_hellknight_walk2.png');
+            sprites.enemy_hellknight_attack = await loadImage('enemy_hellknight_attack.png');
+            
+            // Load Shadow Lord enemy sprites
+            sprites.enemy_shadowlord_idle = await loadImage('enemy_shadowlord_idle.png');
+            sprites.enemy_shadowlord_float1 = await loadImage('enemy_shadowlord_float1.png');
+            sprites.enemy_shadowlord_float2 = await loadImage('enemy_shadowlord_float2.png');
+            sprites.enemy_shadowlord_attack = await loadImage('enemy_shadowlord_attack.png');
             
             // Wait for title screen image to load (if not already loaded)
             const titleBg = document.getElementById('titleBg');
@@ -927,7 +968,7 @@
         
         class Enemy extends Entity {
             constructor(x, y, type) {
-                super(x, y, 35, 45);
+                super(x, y, 80, 80);
                 this.type = type;
                 this.health = type.health;
                 this.maxHealth = type.health;
@@ -935,6 +976,50 @@
                 this.damage = type.damage;
                 this.scoreValue = type.score;
                 this.hitFlash = 0;
+                this.animFrame = 0;
+                this.state = 'idle'; // idle, moving, attacking
+                this.facing = -1; // -1 = left (toward player), 1 = right
+                this.attackTimer = 0;
+                
+                // Set up sprite references based on enemy type name
+                this.setupSprites();
+            }
+            
+            setupSprites() {
+                const name = this.type.name;
+                if (name === 'Skeleton') {
+                    this.sprites = {
+                        idle: sprites.enemy_skeleton_idle,
+                        move1: sprites.enemy_skeleton_walk1,
+                        move2: sprites.enemy_skeleton_walk2,
+                        attack: sprites.enemy_skeleton_attack
+                    };
+                    this.moveAnimSpeed = 8;
+                } else if (name === 'Imp') {
+                    this.sprites = {
+                        idle: sprites.enemy_imp_idle,
+                        move1: sprites.enemy_imp_fly1,
+                        move2: sprites.enemy_imp_fly2,
+                        attack: sprites.enemy_imp_attack
+                    };
+                    this.moveAnimSpeed = 12; // Faster animation for flying
+                } else if (name === 'Demon' || name === 'HellKnight') {
+                    this.sprites = {
+                        idle: sprites.enemy_hellknight_idle,
+                        move1: sprites.enemy_hellknight_walk1,
+                        move2: sprites.enemy_hellknight_walk2,
+                        attack: sprites.enemy_hellknight_attack
+                    };
+                    this.moveAnimSpeed = 6; // Slower for heavy enemies
+                } else if (name === 'ShadowLord') {
+                    this.sprites = {
+                        idle: sprites.enemy_shadowlord_idle,
+                        move1: sprites.enemy_shadowlord_float1,
+                        move2: sprites.enemy_shadowlord_float2,
+                        attack: sprites.enemy_shadowlord_attack
+                    };
+                    this.moveAnimSpeed = 4; // Slow, ominous floating
+                }
             }
             
             update(dt) {
@@ -943,16 +1028,42 @@
                 const dy = player.y - this.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 
+                const wasMoving = this.state === 'moving';
+                
                 if (dist > 0) {
                     this.vx = (dx / dist) * this.speed;
                     this.vy = (dy / dist) * this.speed;
+                    // Update facing direction based on movement
+                    this.facing = dx < 0 ? -1 : 1;
+                }
+                
+                // Determine state
+                if (this.attackTimer > 0) {
+                    this.state = 'attacking';
+                    this.attackTimer -= dt;
+                } else if (Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1) {
+                    this.state = 'moving';
+                } else {
+                    this.state = 'idle';
+                }
+                
+                // Update animation frame
+                if (this.state === 'moving') {
+                    this.animFrame += dt * this.moveAnimSpeed;
+                } else if (this.state === 'attacking') {
+                    this.animFrame += dt * 10; // Fast attack animation
+                } else {
+                    this.animFrame += dt * 4; // Slow idle animation
                 }
                 
                 super.update(dt);
                 
                 // Attack player on contact
                 if (this.intersects(player)) {
-                    player.takeDamage(this.damage);
+                    if (this.attackTimer <= 0) {
+                        this.attackTimer = 0.3; // Attack duration
+                        player.takeDamage(this.damage);
+                    }
                 }
                 
                 if (this.hitFlash > 0) this.hitFlash -= dt;
@@ -999,134 +1110,63 @@
                 }
             }
             
+            getCurrentSprite() {
+                if (!this.sprites) return null;
+                
+                switch(this.state) {
+                    case 'attacking':
+                        return this.sprites.attack;
+                    case 'moving':
+                        // Alternate between move frames
+                        return (Math.floor(this.animFrame) % 2 === 0) ? this.sprites.move1 : this.sprites.move2;
+                    case 'idle':
+                    default:
+                        // Subtle idle animation - alternate if available
+                        if (this.sprites.move1 && this.animFrame % 2 < 1) {
+                            return this.sprites.idle;
+                        }
+                        return this.sprites.idle;
+                }
+            }
+            
             draw(ctx) {
                 ctx.save();
                 
-                if (this.hitFlash > 0) {
-                    ctx.fillStyle = '#fff';
-                } else {
-                    ctx.fillStyle = this.type.color;
+                // Flash when hit
+                if (this.hitFlash > 0 && Math.floor(Date.now() / 50) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
                 }
                 
-                const bounce = Math.sin(Date.now() / 150 + this.x) * 3;
+                const sprite = this.getCurrentSprite();
                 
-                // Draw based on enemy type
-                switch(this.type.name) {
-                    case 'Skeleton':
-                        // Skull
-                        ctx.fillStyle = '#d4d4d4';
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y - 15 + bounce, 15, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Eyes
-                        ctx.fillStyle = '#000';
-                        ctx.beginPath();
-                        ctx.arc(this.x - 5, this.y - 18 + bounce, 3, 0, Math.PI * 2);
-                        ctx.arc(this.x + 5, this.y - 18 + bounce, 3, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Body
-                        ctx.strokeStyle = '#d4d4d4';
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y + bounce);
-                        ctx.lineTo(this.x, this.y + 25 + bounce);
-                        ctx.stroke();
-                        break;
-                        
-                    case 'Imp':
-                        // Demon body
-                        ctx.fillStyle = '#8b0000';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y - 20 + bounce);
-                        ctx.lineTo(this.x - 15, this.y + 20 + bounce);
-                        ctx.lineTo(this.x + 15, this.y + 20 + bounce);
-                        ctx.closePath();
-                        ctx.fill();
-                        // Horns
-                        ctx.fillStyle = '#333';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x - 8, this.y - 15 + bounce);
-                        ctx.lineTo(this.x - 12, this.y - 30 + bounce);
-                        ctx.lineTo(this.x - 3, this.y - 18 + bounce);
-                        ctx.fill();
-                        ctx.beginPath();
-                        ctx.moveTo(this.x + 8, this.y - 15 + bounce);
-                        ctx.lineTo(this.x + 12, this.y - 30 + bounce);
-                        ctx.lineTo(this.x + 3, this.y - 18 + bounce);
-                        ctx.fill();
-                        break;
-                        
-                    case 'Demon':
-                        // Large demon
-                        ctx.fillStyle = '#4a0080';
-                        ctx.fillRect(this.x - 20, this.y - 20 + bounce, 40, 40);
-                        // Wings
-                        ctx.fillStyle = '#2a0050';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x - 20, this.y + bounce);
-                        ctx.quadraticCurveTo(this.x - 40, this.y - 30 + bounce, this.x - 30, this.y + 10 + bounce);
-                        ctx.fill();
-                        ctx.beginPath();
-                        ctx.moveTo(this.x + 20, this.y + bounce);
-                        ctx.quadraticCurveTo(this.x + 40, this.y - 30 + bounce, this.x + 30, this.y + 10 + bounce);
-                        ctx.fill();
-                        // Eyes
-                        ctx.fillStyle = '#ff0000';
-                        ctx.shadowColor = '#ff0000';
-                        ctx.shadowBlur = 10;
-                        ctx.fillRect(this.x - 10, this.y - 10 + bounce, 6, 4);
-                        ctx.fillRect(this.x + 4, this.y - 10 + bounce, 6, 4);
-                        ctx.shadowBlur = 0;
-                        break;
-                        
-                    case 'HellKnight':
-                        // Armored demon
-                        ctx.fillStyle = '#1a0000';
-                        ctx.fillRect(this.x - 22, this.y - 25 + bounce, 44, 50);
-                        // Armor
-                        ctx.strokeStyle = '#ff0000';
-                        ctx.lineWidth = 3;
-                        ctx.strokeRect(this.x - 22, this.y - 25 + bounce, 44, 50);
-                        // Helmet horns
-                        ctx.fillStyle = '#silver';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x - 10, this.y - 20 + bounce);
-                        ctx.lineTo(this.x - 20, this.y - 45 + bounce);
-                        ctx.lineTo(this.x, this.y - 25 + bounce);
-                        ctx.fill();
-                        ctx.beginPath();
-                        ctx.moveTo(this.x + 10, this.y - 20 + bounce);
-                        ctx.lineTo(this.x + 20, this.y - 45 + bounce);
-                        ctx.lineTo(this.x, this.y - 25 + bounce);
-                        ctx.fill();
-                        break;
-                        
-                    case 'ShadowLord':
-                        // Boss - shadowy figure
-                        ctx.fillStyle = '#000';
-                        ctx.shadowColor = '#4a0080';
-                        ctx.shadowBlur = 20;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y + bounce, 25, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Crown
-                        ctx.fillStyle = '#ffd700';
-                        ctx.shadowColor = '#ffd700';
-                        for (let i = -2; i <= 2; i++) {
-                            ctx.fillRect(this.x + i * 8 - 2, this.y - 30 + bounce - Math.abs(i) * 3, 4, 8 + Math.abs(i) * 3);
-                        }
-                        ctx.shadowBlur = 0;
-                        break;
+                if (sprite) {
+                    ctx.save();
+                    
+                    // Position for 80x80 sprite centered on entity
+                    const drawX = this.x - 40;
+                    const drawY = this.y - 40;
+                    
+                    // Enemy sprites face LEFT (toward player) by default
+                    // If facing right (1), we need to flip
+                    if (this.facing === 1) {
+                        ctx.translate(this.x + 40, this.y - 40);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(sprite, 0, 0, 80, 80);
+                    } else {
+                        ctx.drawImage(sprite, drawX, drawY, 80, 80);
+                    }
+                    
+                    ctx.restore();
                 }
                 
                 // Health bar for tougher enemies
                 if (this.maxHealth > 30) {
-                    const barWidth = 30;
-                    const barHeight = 4;
+                    const barWidth = 50;
+                    const barHeight = 6;
                     ctx.fillStyle = '#333';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 40 + bounce, barWidth, barHeight);
+                    ctx.fillRect(this.x - barWidth/2, this.y - 50, barWidth, barHeight);
                     ctx.fillStyle = '#ff0000';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 40 + bounce, barWidth * (this.health / this.maxHealth), barHeight);
+                    ctx.fillRect(this.x - barWidth/2, this.y - 50, barWidth * (this.health / this.maxHealth), barHeight);
                 }
                 
                 ctx.restore();
