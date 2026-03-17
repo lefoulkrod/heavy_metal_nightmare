@@ -28,6 +28,10 @@
 [![Metal AF](https://img.shields.io/badge/METAL-AS%20F%2A%2A%2A-8b0000?style=for-the-badge)](https://github.com)
 [![HTML5 Game](https://img.shields.io/badge/HTML5-GAME-4a0080?style=for-the-badge&logo=html5)](https://github.com)
 
+## 🎮 [PLAY NOW - GitHub Pages](https://lefoulkrod.github.io/heavy_metal_nightmare/)
+
+**[⬆️ CLICK HERE TO PLAY THE GAME ⬆️](https://lefoulkrod.github.io/heavy_metal_nightmare/)**
+
 </div>
 
 ---
@@ -62,7 +66,13 @@ With **procedurally generated heavy metal music** powering your every strike, ev
 
 ## 🎮 HOW TO PLAY
 
-1. **Open `game.html`** in your favorite browser
+### Option 1: Play Online (Recommended)
+**🌐 [Play directly in your browser](https://lefoulkrod.github.io/heavy_metal_nightmare/)**
+
+No download required! Just click and play.
+
+### Option 2: Play Locally
+1. **Open `index.html`** in your favorite browser
 2. **Click "ENTER THE ABYSS"** to begin your nightmare
 3. **Survive waves of demons** in each of the 3 levels
 4. **Collect power-ups** dropped by defeated enemies
@@ -144,7 +154,7 @@ With **procedurally generated heavy metal music** powering your every strike, ev
 
 ```
 heavy_metal_nightmare/
-├── game.html                  # Main game file (play this!)
+├── index.html                 # Main game file (play this!)
 ├── README.md                  # This file
 ├── title_screen.jpg           # Title screen artwork
 ├── bg_level1_cemetery.jpg     # Level 1 background
@@ -168,6 +178,10 @@ heavy_metal_nightmare/
 
 ## 🚀 QUICK START
 
+### Play Online (Easiest)
+**👉 [https://lefoulkrod.github.io/heavy_metal_nightmare/](https://lefoulkrod.github.io/heavy_metal_nightmare/)**
+
+### Play Locally
 ```bash
 # Clone the repository
 git clone https://github.com/lefoulkrod/heavy_metal_nightmare.git
@@ -176,9 +190,9 @@ git clone https://github.com/lefoulkrod/heavy_metal_nightmare.git
 cd heavy_metal_nightmare
 
 # Open in browser (Linux/Mac)
-open game.html
+open index.html
 
-# Or on Windows, simply double-click game.html
+# Or on Windows, simply double-click index.html
 ```
 
 ---
@@ -209,6 +223,10 @@ open game.html
 ---
 
 <div align="center">
+
+## 🎮 [PLAY NOW](https://lefoulkrod.github.io/heavy_metal_nightmare/)
+
+**[https://lefoulkrod.github.io/heavy_metal_nightmare/](https://lefoulkrod.github.io/heavy_metal_nightmare/)**
 
 **🤘 PLAY LOUD. PLAY PROUD. PLAY METAL. 🤘**
 
