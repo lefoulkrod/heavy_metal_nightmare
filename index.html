@@ -1354,8 +1354,8 @@
             }
             
             summonMinions() {
-                // Summon 3-5 weak skeletons around the boss
-                const count = 3 + Math.floor(Math.random() * 3);
+                // Summon 2-3 weak skeletons around the boss
+                const count = 2 + Math.floor(Math.random() * 2);
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 2 * i) / count;
                     const dist = 150;
@@ -1998,6 +1998,9 @@ let finalBossDefeated = false;
                 const allEntities = [...powerups, ...enemies, player, ...particles];
                 allEntities.sort((a, b) => a.y - b.y);
                 allEntities.forEach(e => e.draw(ctx));
+                
+                // Draw boss projectiles (these should be visible above other entities)
+                bossProjectiles.forEach(p => p.draw(ctx));
                 
                 ctx.restore();
             }
