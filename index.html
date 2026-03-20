@@ -864,8 +864,8 @@
             constructor() {
                 super(canvas.width / 2, canvas.height - 100, 80, 80);
                 this.speed = 250;
-                this.health = 100;
-                this.maxHealth = 100;
+                this.maxHealth = 120;  // Extra health for survivability
+                this.health = this.maxHealth;
                 this.attackCooldown = 0;
                 this.attackDuration = 0;
                 // Special attack (Power Chord)
@@ -1397,9 +1397,9 @@
                 { name: 'HellKnight', health: 100, speed: 50, damage: 25, score: 500, color: '#1a0000' }
             ],
             3: [
-                { name: 'Demon', health: 80, speed: 90, damage: 25, score: 300, color: '#4a0080' },
-                { name: 'HellKnight', health: 150, speed: 60, damage: 30, score: 500, color: '#1a0000' },
-                { name: 'ShadowLord', health: 500, speed: 40, damage: 40, score: 2000, color: '#000000' }
+                { name: 'Demon', health: 50, speed: 80, damage: 18, score: 300, color: '#4a0080' },
+                { name: 'HellKnight', health: 90, speed: 50, damage: 22, score: 500, color: '#1a0000' },
+                { name: 'ShadowLord', health: 300, speed: 35, damage: 30, score: 2000, color: '#000000' }
             ]
         };
         
@@ -1421,7 +1421,7 @@
         const levelConfig = {
             1: { enemies: 15, spawnRate: 2, duration: 30 },
             2: { enemies: 25, spawnRate: 1.5, duration: 45 },
-            3: { enemies: 40, spawnRate: 1, duration: 60, hasBoss: true }
+            3: { enemies: 25, spawnRate: 1.8, duration: 60, hasBoss: true }  // Fewer enemies, slower spawns
         };
         
         // ============================================
@@ -1555,7 +1555,7 @@
                 spawnTimer = 0;
                 
                 // Heal player between levels
-                if (level > 1) player.heal(50);
+                if (level > 1) player.heal(70);  // More healing between levels
                 
                 startMusic(level);
             }, 2500);
@@ -1581,9 +1581,9 @@
         function spawnBoss() {
             const bossType = { 
                 name: 'ShadowLord', 
-                health: 800, 
-                speed: 35, 
-                damage: 35, 
+                health: 400,   // Reduced from 800
+                speed: 30, 
+                damage: 25,    // Reduced from 35
                 score: 5000, 
                 color: '#000000' 
             };
