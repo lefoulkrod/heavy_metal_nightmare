@@ -314,6 +314,12 @@
                 <div class="hud-item">
                     HEALTH: <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
                 </div>
+                <div style="position: absolute; bottom: 60px; left: 20px; width: 150px;">
+                    <div style="color: #fff; font-size: 12px; margin-bottom: 2px;">POWER CHORD [E]</div>
+                    <div style="width: 150px; height: 10px; background: #333; border: 2px solid #666; border-radius: 5px;">
+                        <div id="specialFill" style="width: 100%; height: 100%; background: #ff0066; border-radius: 3px;"></div>
+                    </div>
+                </div>
                 <div class="hud-item">
                     SCORE: <span id="scoreDisplay">0</span>
                 </div>
@@ -638,6 +644,45 @@
             osc.stop(now + duration);
         }
         
+        // Create distorted bass for power chord
+        function createDistortedBass(frequency, duration) {
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            const distortion = audioCtx.createWaveShaper();
+            
+            // Distortion curve
+            const samples = 44100;
+            const curve = new Float32Array(samples);
+            for (let i = 0; i < samples; i++) {
+                const x = i * 2 / samples - 1;
+                curve[i] = (Math.PI + 30) * x / (Math.PI + 30 * Math.abs(x));
+            }
+            distortion.curve = curve;
+            distortion.oversample = '4x';
+            
+            osc.type = 'sawtooth';
+            osc.frequency.value = frequency;
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 200;
+            filter.Q.value = 10;
+            
+            osc.connect(distortion);
+            distortion.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+            
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+            
+            osc.start(now);
+            osc.stop(now + duration);
+        }
+        
         // Sound Effects
         function playSound(sound) {
             if (!audioCtx) return;
@@ -667,6 +712,13 @@
                     [110, 82, 55, 41].forEach((freq, i) => {
                         setTimeout(() => createGuitarSound(freq, 0.8), i * 300);
                     });
+                    break;
+                case 'powerChord':
+                    // Heavy power chord sound
+                    createGuitarSound(82.41, 0.8);  // Low E
+                    createGuitarSound(110, 0.8);    // A
+                    createGuitarSound(164.81, 0.8);  // E octave
+                    createDistortedBass(55, 0.6);
                     break;
             }
         }
@@ -784,11 +836,10 @@
         }
         
         class Particle extends Entity {
-            constructor(x, y, color, speed, life) {
+            constructor(x, y, color, speed, life, angle = null) {
                 super(x, y, 4, 4);
-                const angle = Math.random() * Math.PI * 2;
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
+                this.vx = angle !== null ? Math.cos(angle) * speed : (Math.random() - 0.5) * speed * 2;
+                this.vy = angle !== null ? Math.sin(angle) * speed : (Math.random() - 0.5) * speed * 2;
                 this.color = color;
                 this.life = life;
                 this.maxLife = life;
@@ -817,6 +868,13 @@
                 this.maxHealth = 100;
                 this.attackCooldown = 0;
                 this.attackDuration = 0;
+                // Special attack (Power Chord)
+                this.specialCooldown = 0;        // Current cooldown timer
+                this.specialMaxCooldown = 8;     // 8 second cooldown
+                this.specialRadius = 200;        // Damage radius
+                this.specialDamage = 50;         // Base damage
+                this.specialActive = false;      // For visual effect
+                this.specialDuration = 0;        // How long the effect shows
                 this.facing = 1; // 1 = right, -1 = left
                 this.invulnerable = 0;
                 this.powerLevel = 1;
@@ -864,9 +922,16 @@
                 // Attack
                 if (this.attackCooldown > 0) this.attackCooldown -= dt;
                 if (this.attackDuration > 0) this.attackDuration -= dt;
+                if (this.specialCooldown > 0) this.specialCooldown -= dt;
+                if (this.specialDuration > 0) this.specialDuration -= dt;
                 
                 if ((keys[' '] || keys['Space']) && this.attackCooldown <= 0) {
                     this.attack();
+                }
+                
+                // Special attack (Power Chord) - Press 'E'
+                if ((keys['e'] || keys['E']) && this.specialCooldown <= 0 && this.powerLevel >= 1) {
+                    this.powerChord();
                 }
                 
                 // Invulnerability
@@ -903,6 +968,56 @@
                         '#ff0000',
                         speed,
                         0.3
+                    ));
+                }
+            }
+            
+            powerChord() {
+                this.specialCooldown = this.specialMaxCooldown;
+                this.specialDuration = 0.5;
+                this.specialActive = true;
+                playSound('powerChord');
+                
+                // Screen shake
+                screenShake = 0.5;
+                
+                // Damage all enemies within radius
+                enemies.forEach(enemy => {
+                    const dx = enemy.x - this.x;
+                    const dy = enemy.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < this.specialRadius) {
+                        // Damage falls off with distance
+                        const damageMultiplier = 1 - (dist / this.specialRadius) * 0.5;
+                        enemy.takeDamage(this.specialDamage * this.powerLevel * damageMultiplier);
+                    }
+                });
+                
+                // Create radial burst particles
+                for (let i = 0; i < 24; i++) {
+                    const angle = (i / 24) * Math.PI * 2;
+                    const speed = 300 + Math.random() * 100;
+                    particles.push(new Particle(
+                        this.x,
+                        this.y,
+                        '#ff0066',
+                        speed,
+                        0.5,
+                        angle
+                    ));
+                }
+                
+                // Create inner burst
+                for (let i = 0; i < 16; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 100 + Math.random() * 150;
+                    particles.push(new Particle(
+                        this.x,
+                        this.y,
+                        '#ffff00',
+                        speed,
+                        0.3,
+                        angle
                     ));
                 }
             }
@@ -971,6 +1086,29 @@
                     const arcEnd = this.facing > 0 ? Math.PI / 3 : Math.PI * 4 / 3;
                     ctx.arc(this.x, this.y, 60, arcStart, arcEnd);
                     ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Power Chord visual effect
+                if (this.specialDuration > 0) {
+                    ctx.strokeStyle = '#ff0066';
+                    ctx.lineWidth = 6;
+                    ctx.shadowColor = '#ff0066';
+                    ctx.shadowBlur = 30;
+                    
+                    const progress = 1 - (this.specialDuration / 0.5);
+                    const radius = this.specialRadius * progress;
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, radius * 0.7, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
                     ctx.shadowBlur = 0;
                 }
                 
@@ -1493,6 +1631,20 @@
             document.getElementById('scoreDisplay').textContent = score;
             document.getElementById('levelDisplay').textContent = currentLevel;
             document.getElementById('healthFill').style.width = (player.health / player.maxHealth * 100) + '%';
+            
+            // Update special attack cooldown display
+            const specialFill = document.getElementById('specialFill');
+            if (specialFill) {
+                const readyPercent = Math.max(0, 100 - (player.specialCooldown / player.specialMaxCooldown * 100));
+                specialFill.style.width = readyPercent + '%';
+                if (player.specialCooldown <= 0) {
+                    specialFill.style.backgroundColor = '#ff0066';
+                    specialFill.parentElement.style.boxShadow = '0 0 10px #ff0066';
+                } else {
+                    specialFill.style.backgroundColor = '#666';
+                    specialFill.parentElement.style.boxShadow = 'none';
+                }
+            }
         }
         
         // ============================================
