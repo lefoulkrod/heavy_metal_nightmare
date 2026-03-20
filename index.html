@@ -1868,6 +1868,14 @@ let finalBossActive = false;
         window.addEventListener('keydown', e => {
             keys[e.key] = true;
             
+            // Secret level skip codes (press 1, 2, or 3 during gameplay)
+            if ((e.key === '1' || e.key === '2' || e.key === '3') && currentState === GameState.PLAYING) {
+                const targetLevel = parseInt(e.key);
+                if (targetLevel !== currentLevel) {
+                    startLevel(targetLevel);
+                }
+            }
+            
             if (e.key === 'p' || e.key === 'P') {
                 if (currentState === GameState.PLAYING) {
                     currentState = GameState.PAUSED;
