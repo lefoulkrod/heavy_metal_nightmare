@@ -406,6 +406,8 @@
         let assetsLoaded = 0;
         const totalAssets = 24; // 4 player sprites + 16 enemy sprites + 1 title screen + 3 backgrounds
         
+        const CACHE_VERSION = 'v2-' + Date.now(); // Cache-busting version
+        
         function loadImage(src) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -418,7 +420,8 @@
                     assetsLoaded++;
                     resolve(null);
                 };
-                img.src = src;
+                // Append cache-busting query parameter
+                img.src = src + '?' + CACHE_VERSION;
             });
         }
         
