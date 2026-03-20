@@ -890,6 +890,8 @@
                 const alpha = this.life / this.maxLife;
                 ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
                 ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            }
+        }
         
         // ============================================
         // BOSS PROJECTILE (Fireballs)
@@ -953,8 +955,6 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, size * 0.5, 0, Math.PI * 2);
                 ctx.fill();
-            }
-        }
             }
         }
         
