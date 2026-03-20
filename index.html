@@ -1421,11 +1421,11 @@
             }
             
             shootFireballs() {
-                // Shoot 3 fireballs in a focused spread pattern toward player
+                // Shoot 5 fireballs in a focused spread pattern toward player
                 const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
                 const spread = 0.25; // Spread angle in radians (tighter spread)
                 
-                for (let i = -1; i <= 1; i++) {
+                for (let i = -2; i <= 2; i++) {
                     const angle = baseAngle + (i * spread);
                     const fireball = new BossProjectile(
                         this.x, this.y,
