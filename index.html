@@ -1814,7 +1814,7 @@ let finalBossActive = false;
                 
                 // Spawn enemies
                 const config = levelConfig[currentLevel];
-                if (enemiesToSpawn > 0 && spawnTimer >= config.spawnRate) {
+                if (enemiesToSpawn > 0 && spawnTimer >= config.spawnRate && !finalBossActive) {
                     spawnEnemy();
                     enemiesToSpawn--;
                     spawnTimer = 0;
@@ -1826,7 +1826,7 @@ let finalBossActive = false;
                 }
                 
                 // Check level completion
-                if (enemiesToSpawn === 0 && enemies.length === 0) {
+                if (enemiesToSpawn === 0 && enemies.length === 0 && !finalBossActive) {
                     levelComplete();
                 }
                 
