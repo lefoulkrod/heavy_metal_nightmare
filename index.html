@@ -168,6 +168,28 @@
             transition: width 0.3s;
         }
         
+        .special-bar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #ff0066;
+            border-radius: 10px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        .special-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff66aa, #ff0066);
+            transition: width 0.3s;
+        }
+
+        .special-fill.ready {
+            box-shadow: 0 0 10px #ff0066;
+        }
+        
         #levelIndicator {
             position: absolute;
             top: 50%;
@@ -314,11 +336,8 @@
                 <div class="hud-item">
                     HEALTH: <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
                 </div>
-                <div style="position: absolute; bottom: 60px; left: 20px; width: 150px;">
-                    <div style="color: #fff; font-size: 12px; margin-bottom: 2px;">POWER CHORD [E]</div>
-                    <div style="width: 150px; height: 10px; background: #333; border: 2px solid #666; border-radius: 5px;">
-                        <div id="specialFill" style="width: 100%; height: 100%; background: #ff0066; border-radius: 3px;"></div>
-                    </div>
+                <div class="hud-item" style="margin-left: 10px;">
+                    POWER: <div class="special-bar"><div class="special-fill" id="specialFill" style="width: 100%"></div></div>
                 </div>
                 <div class="hud-item">
                     SCORE: <span id="scoreDisplay">0</span>
@@ -1638,11 +1657,9 @@
                 const readyPercent = Math.max(0, 100 - (player.specialCooldown / player.specialMaxCooldown * 100));
                 specialFill.style.width = readyPercent + '%';
                 if (player.specialCooldown <= 0) {
-                    specialFill.style.backgroundColor = '#ff0066';
-                    specialFill.parentElement.style.boxShadow = '0 0 10px #ff0066';
+                    specialFill.classList.add('ready');
                 } else {
-                    specialFill.style.backgroundColor = '#666';
-                    specialFill.parentElement.style.boxShadow = 'none';
+                    specialFill.classList.remove('ready');
                 }
             }
         }
