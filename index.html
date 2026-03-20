@@ -1868,7 +1868,14 @@ let finalBossActive = false;
         window.addEventListener('keydown', e => {
             keys[e.key] = true;
             
-            // Secret level skip codes (press 1, 2, or 3 during gameplay)
+            // Secret level skip codes
+            // Press B to spawn final boss directly
+            if ((e.key === 'b' || e.key === 'B') && currentState === GameState.PLAYING) {
+                enemies = [];
+                currentLevel = 3;
+                spawnFinalBoss();
+            }
+            // Secret level (press 1, 2, or 3 during gameplay)
             if ((e.key === '1' || e.key === '2' || e.key === '3') && currentState === GameState.PLAYING) {
                 const targetLevel = parseInt(e.key);
                 if (targetLevel !== currentLevel) {
