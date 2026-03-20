@@ -370,8 +370,10 @@
             
             <!-- Victory Screen -->
             <div id="victoryScreen" class="screen hidden">
+                <h1>⚡ VICTORY ⚡</h1>
                 <h2>🤘 METAL VICTORY 🤘</h2>
-                <p class="subtitle">The Abyss has been conquered!</p>
+                <p class="subtitle">You have defeated the Death Metal Overlord!</p>
+                <p class="subtitle" style="font-size: 18px; color: #ff6666; margin-top: -15px;">The metal realm is saved!</p>
                 <p class="stats">Final Score: <span id="victoryScore">0</span></p>
                 <p class="stats">Demons Slain: <span id="demonsSlain">0</span></p>
                 <button class="btn" id="playAgainBtn">SHRED AGAIN</button>
@@ -888,6 +890,71 @@
                 const alpha = this.life / this.maxLife;
                 ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
                 ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+        
+        // ============================================
+        // BOSS PROJECTILE (Fireballs)
+        // ============================================
+        
+        class BossProjectile extends Entity {
+            constructor(x, y, targetX, targetY, damage = 20) {
+                super(x, y, 24, 24);
+                const angle = Math.atan2(targetY - y, targetX - x);
+                const speed = 200;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.damage = damage;
+                this.life = 5; // Max lifetime in seconds
+                this.animFrame = 0;
+            }
+            
+            update(dt) {
+                super.update(dt);
+                this.life -= dt;
+                this.animFrame += dt * 10;
+                
+                // Check collision with player
+                if (this.intersects(player)) {
+                    player.takeDamage(this.damage);
+                    this.markedForDeletion = true;
+                    
+                    // Impact particles
+                    for (let i = 0; i < 10; i++) {
+                        particles.push(new Particle(this.x, this.y, '#ff4400', 100, 0.3));
+                    }
+                }
+                
+                // Remove if off screen or expired
+                if (this.life <= 0 || this.x < -50 || this.x > canvas.width + 50 ||
+                    this.y < -50 || this.y > canvas.height + 50) {
+                    this.markedForDeletion = true;
+                }
+            }
+            
+            draw(ctx) {
+                // Fireball with trailing effect
+                const frame = Math.floor(this.animFrame) % 4;
+                const sizes = [20, 24, 20, 16];
+                const size = sizes[frame];
+                
+                // Outer glow
+                ctx.fillStyle = '#ff2200';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size + 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Core
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Hot center
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
             }
         }
         
@@ -1210,6 +1277,9 @@
                         };
                         this.width = 120;
                         this.height = 120;
+                        this.specialAttackTimer = 0;
+                        this.specialAttackCooldown = 2;  // Attack every 2 seconds
+                        this.minionsSummoned = 0;
                     } else {
                         this.width = 80;
                         this.height = 80;
@@ -1254,6 +1324,24 @@
                 
                 super.update(dt);
                 
+                // Special attacks for Death Metal Overlord
+                if (this.type.isFinalBoss && this.specialAttackTimer !== undefined) {
+                    this.specialAttackTimer += dt;
+                    
+                    if (this.specialAttackTimer >= this.specialAttackCooldown) {
+                        this.specialAttackTimer = 0;
+                        
+                        // Choose attack type
+                        if (Math.random() < 0.4) {
+                            // Summon minions (40% chance)
+                            this.summonMinions();
+                        } else {
+                            // Fireball volley (60% chance)
+                            this.shootFireballs();
+                        }
+                    }
+                }
+                
                 // Attack player on contact
                 if (this.intersects(player)) {
                     if (this.attackTimer <= 0) {
@@ -1263,6 +1351,61 @@
                 }
                 
                 if (this.hitFlash > 0) this.hitFlash -= dt;
+            
+            summonMinions() {
+                // Summon 3-5 weak skeletons around the boss
+                const count = 3 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count;
+                    const dist = 150;
+                    const x = this.x + Math.cos(angle) * dist;
+                    const y = this.y + Math.sin(angle) * dist;
+                    
+                    // Create weak minion
+                    const minionType = {
+                        name: 'Skeleton',
+                        health: 15,  // Very low health
+                        speed: 80,
+                        damage: 5,
+                        score: 10,
+                        color: '#444444'
+                    };
+                    
+                    // Only spawn if on screen
+                    if (x > 0 && x < canvas.width && y > 0 && y < canvas.height) {
+                        enemies.push(new Enemy(x, y, minionType));
+                    }
+                }
+                
+                // Visual effect
+                for (let i = 0; i < 20; i++) {
+                    particles.push(new Particle(this.x, this.y, '#9900ff', 150, 0.5));
+                }
+                playSound('powerChord');
+            }
+            
+            shootFireballs() {
+                // Shoot 5 fireballs in a spread pattern toward player
+                const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                const spread = 0.3; // Spread angle in radians
+                
+                for (let i = -2; i <= 2; i++) {
+                    const angle = baseAngle + (i * spread);
+                    const fireball = new BossProjectile(
+                        this.x, this.y,
+                        this.x + Math.cos(angle) * 500,
+                        this.y + Math.sin(angle) * 500,
+                        15  // Damage per fireball
+                    );
+                    bossProjectiles.push(fireball);
+                }
+                
+                // Visual effect
+                for (let i = 0; i < 10; i++) {
+                    particles.push(new Particle(this.x, this.y, '#ff4400', 100, 0.3));
+                }
+                playSound('powerChord');
+            }
             }
             
             takeDamage(amount) {
@@ -1303,6 +1446,7 @@
                 // Final boss death - extra epic effects
                 if (this.type.isFinalBoss) {
                     finalBossActive = false;
+                    finalBossDefeated = true;
                     
                     // Epic explosion
                     for (let i = 0; i < 50; i++) {
@@ -1319,6 +1463,19 @@
                     
                     // Play power chord
                     playSound('powerChord');
+                    
+                    // Clear any remaining enemies and projectiles - victory achieved!
+                    enemies.forEach(e => {
+                        if (e !== this) {
+                            e.markedForDeletion = true;
+                        }
+                    });
+                    bossProjectiles = [];
+                    
+                    // Trigger victory after a short delay for the explosion effect
+                    setTimeout(() => {
+                        victory();
+                    }, 500);
                 }
                 
                 // Chance to drop powerup
@@ -1502,12 +1659,14 @@
         let enemies = [];
         let particles = [];
         let powerups = [];
+        let bossProjectiles = [];
         let screenShake = 0;
         let spawnTimer = 0;
         let levelTime = 0;
         let enemiesToSpawn = 0;
 let finalBossSpawned = false;
 let finalBossActive = false;
+let finalBossDefeated = false;
         
         // Level configurations
         const levelConfig = {
@@ -1619,6 +1778,7 @@ let finalBossActive = false;
             currentLevel = 1;
             finalBossSpawned = false;
             finalBossActive = false;
+            finalBossDefeated = false;
             enemiesToSpawn = levelConfig[1].enemies;
             updateHUD();
         }
@@ -1644,6 +1804,7 @@ let finalBossActive = false;
                 powerups = [];
                 finalBossSpawned = false;
                 finalBossActive = false;
+                finalBossDefeated = false;
                 enemiesToSpawn = levelConfig[level].enemies;
                 levelTime = 0;
                 spawnTimer = 0;
@@ -1799,14 +1960,14 @@ let finalBossActive = false;
                 
                 // Spawn enemies
                 const config = levelConfig[currentLevel];
-                if (enemiesToSpawn > 0 && spawnTimer >= config.spawnRate && !finalBossActive) {
+                if (enemiesToSpawn > 0 && spawnTimer >= config.spawnRate && !finalBossActive && !finalBossDefeated) {
                     spawnEnemy();
                     enemiesToSpawn--;
                     spawnTimer = 0;
                 }
                 
                 // Check level completion
-                if (enemiesToSpawn === 0 && enemies.length === 0 && !finalBossActive) {
+                if (enemiesToSpawn === 0 && enemies.length === 0 && !finalBossActive && !finalBossDefeated) {
                     levelComplete();
                 }
                 
@@ -1815,6 +1976,9 @@ let finalBossActive = false;
                 
                 enemies.forEach(e => e.update(dt));
                 enemies = enemies.filter(e => !e.markedForDeletion);
+                
+                bossProjectiles.forEach(p => p.update(dt));
+                bossProjectiles = bossProjectiles.filter(p => !p.markedForDeletion);
                 
                 particles.forEach(p => p.update(dt));
                 particles = particles.filter(p => !p.markedForDeletion);
