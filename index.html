@@ -1506,7 +1506,6 @@
         let spawnTimer = 0;
         let levelTime = 0;
         let enemiesToSpawn = 0;
-        let bossSpawned = false;
 let finalBossSpawned = false;
 let finalBossActive = false;
         
@@ -1514,7 +1513,7 @@ let finalBossActive = false;
         const levelConfig = {
             1: { enemies: 15, spawnRate: 2, duration: 30 },
             2: { enemies: 25, spawnRate: 1.5, duration: 45 },
-            3: { enemies: 25, spawnRate: 1.8, duration: 60, hasBoss: true }  // Fewer enemies, slower spawns
+            3: { enemies: 25, spawnRate: 1.8, duration: 60 }  // Fewer enemies, slower spawns
         };
         
         // ============================================
@@ -1618,7 +1617,6 @@ let finalBossActive = false;
             score = 0;
             demonsKilled = 0;
             currentLevel = 1;
-            bossSpawned = false;
             finalBossSpawned = false;
             finalBossActive = false;
             enemiesToSpawn = levelConfig[1].enemies;
@@ -1644,7 +1642,6 @@ let finalBossActive = false;
                 enemies = [];
                 particles = [];
                 powerups = [];
-                bossSpawned = false;
                 finalBossSpawned = false;
                 finalBossActive = false;
                 enemiesToSpawn = levelConfig[level].enemies;
@@ -1675,18 +1672,6 @@ let finalBossActive = false;
             enemies.push(new Enemy(x, y, type));
         }
         
-        function spawnBoss() {
-            const bossType = { 
-                name: 'ShadowLord', 
-                health: 400,   // Reduced from 800
-                speed: 30, 
-                damage: 25,    // Reduced from 35
-                score: 5000, 
-                color: '#000000' 
-            };
-            enemies.push(new Enemy(canvas.width / 2, -100, bossType));
-            bossSpawned = true;
-        }
         
         function spawnFinalBoss() {
             // Epic final boss - Death Metal Overlord
@@ -1820,9 +1805,6 @@ let finalBossActive = false;
                     spawnTimer = 0;
                 }
                 
-                // Spawn boss in level 3
-                if (currentLevel === 3 && config.hasBoss && !bossSpawned && enemiesToSpawn <= 5) {
-                    spawnBoss();
                 }
                 
                 // Check level completion
