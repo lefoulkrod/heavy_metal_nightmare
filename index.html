@@ -1337,6 +1337,7 @@
                         // Enter attack phase
                         this.attackPhase = 'attacking';
                         this.phaseTimer = 1.5;  // Attack lasts 1.5 seconds
+                        console.log('[BOSS] Phase: ATTACKING - dodge the fireballs!');
                         this.shootFireballs();
                     } else if (this.attackPhase === 'attacking') {
                         this.phaseTimer -= dt;
@@ -1346,6 +1347,7 @@
                             this.phaseTimer = 3;  // 3 seconds of vulnerability
                             this.vx = 0;
                             this.vy = 0;
+                            console.log('[BOSS] Phase: VULNERABLE - attack now!');
                         }
                     } else if (this.attackPhase === 'vulnerable') {
                         this.phaseTimer -= dt;
@@ -1353,6 +1355,7 @@
                             // Return to idle
                             this.attackPhase = 'idle';
                             this.specialAttackTimer = 0;
+                            console.log('[BOSS] Phase: IDLE - preparing next attack...');
                         }
                     }
                     
@@ -1608,21 +1611,11 @@
                     ctx.lineWidth = 2;
                     ctx.strokeRect(this.x - barWidth/2, barY, barWidth, barHeight);
                     
-                    // Boss name and phase indicator
+                    // Boss name
                     ctx.fillStyle = '#fff';
                     ctx.font = 'bold 14px Arial';
                     ctx.textAlign = 'center';
                     ctx.fillText('DEATH METAL OVERLORD', this.x, this.y - 80);
-                    
-                    // Phase indicator below health bar
-                    ctx.font = 'bold 11px Arial';
-                    if (this.attackPhase === 'vulnerable') {
-                        ctx.fillStyle = '#00ff00';
-                        ctx.fillText('⚡ VULNERABLE ⚡', this.x, this.y - 55);
-                    } else if (this.attackPhase === 'attacking') {
-                        ctx.fillStyle = '#ff6600';
-                        ctx.fillText('🔥 ATTACKING 🔥', this.x, this.y - 55);
-                    }
                 }
                 
                 ctx.restore();
