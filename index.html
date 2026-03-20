@@ -132,63 +132,64 @@
             margin: 0 10px;
         }
         
-        #hud {
+        .hud-container {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
+            bottom: 15px;
+            left: 15px;
             display: flex;
-            justify-content: space-between;
-            font-size: 24px;
-            text-shadow: 0 0 10px #000;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 8px;
         }
-        
+
         .hud-item {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border: 2px solid #8b0000;
-            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.85);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
-        
+
+        .bar-label {
+            margin-right: 6px;
+            letter-spacing: 1px;
+        }
+
         .health-bar {
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border: 2px solid #8b0000;
-            border-radius: 10px;
+            width: 100px;
+            height: 10px;
+            background: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(139, 0, 0, 0.6);
+            border-radius: 5px;
             overflow: hidden;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 10px;
         }
-        
+
         .health-fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff0000, #8b0000);
+            background: linear-gradient(90deg, rgba(255, 0, 0, 0.9), rgba(139, 0, 0, 0.9));
             transition: width 0.3s;
         }
-        
+
         .special-bar {
-            width: 120px;
-            height: 12px;
-            background: #333;
-            border: 1px solid #ff0066;
-            border-radius: 6px;
+            width: 100px;
+            height: 10px;
+            background: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(255, 0, 102, 0.5);
+            border-radius: 5px;
             overflow: hidden;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 8px;
-            opacity: 0.7;
         }
 
         .special-fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff3388, #cc0055);
+            background: linear-gradient(90deg, rgba(255, 51, 136, 0.9), rgba(204, 0, 85, 0.9));
             transition: width 0.3s;
         }
 
         .special-fill.ready {
-            opacity: 1;
+            background: linear-gradient(90deg, rgba(255, 0, 102, 1), rgba(204, 0, 85, 1));
         }
         
         #levelIndicator {
@@ -332,19 +333,21 @@
                 </div>
             </div>
             
-            <!-- HUD -->
-            <div id="hud" class="hidden">
+            <!-- Compact translucent HUD -->
+            <div id="hud" class="hud-container hidden">
                 <div class="hud-item">
-                    HEALTH: <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
+                    <span class="bar-label">HP</span>
+                    <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
+                </div>
+                <div class="hud-item">
+                    <span class="bar-label">PWR</span>
+                    <div class="special-bar"><div class="special-fill" id="specialFill" style="width: 100%"></div></div>
                 </div>
                 <div class="hud-item" style="margin-left: 10px;">
-                    POWER: <div class="special-bar"><div class="special-fill" id="specialFill" style="width: 100%"></div></div>
+                    <span id="scoreDisplay">0</span>
                 </div>
                 <div class="hud-item">
-                    SCORE: <span id="scoreDisplay">0</span>
-                </div>
-                <div class="hud-item">
-                    LEVEL: <span id="levelDisplay">1</span>
+                    LVL <span id="levelDisplay">1</span>
                 </div>
             </div>
             
