@@ -132,64 +132,40 @@
             margin: 0 10px;
         }
         
-        .hud-container {
+        #hud {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
+            top: 10px;
+            left: 10px;
+            right: 10px;
             display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 15px;
-            border-radius: 8px;
+            justify-content: space-between;
+            font-size: 24px;
+            text-shadow: 0 0 10px #000;
         }
-
+        
         .hud-item {
-            display: flex;
-            align-items: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.85);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-        }
-
-        .bar-label {
-            margin-right: 6px;
-            letter-spacing: 1px;
-        }
-
-        .health-bar {
-            width: 100px;
-            height: 10px;
-            background: rgba(30, 30, 30, 0.7);
-            border: 1px solid rgba(139, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border: 2px solid #8b0000;
             border-radius: 5px;
-            overflow: hidden;
         }
-
+        
+        .health-bar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #8b0000;
+            border-radius: 10px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        
         .health-fill {
             height: 100%;
-            background: linear-gradient(90deg, rgba(255, 0, 0, 0.9), rgba(139, 0, 0, 0.9));
+            background: linear-gradient(90deg, #ff0000, #8b0000);
             transition: width 0.3s;
-        }
-
-        .special-bar {
-            width: 100px;
-            height: 10px;
-            background: rgba(30, 30, 30, 0.7);
-            border: 1px solid rgba(255, 0, 102, 0.5);
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .special-fill {
-            height: 100%;
-            background: linear-gradient(90deg, rgba(255, 51, 136, 0.9), rgba(204, 0, 85, 0.9));
-            transition: width 0.3s;
-        }
-
-        .special-fill.ready {
-            background: linear-gradient(90deg, rgba(255, 0, 102, 1), rgba(204, 0, 85, 1));
         }
         
         #levelIndicator {
@@ -333,21 +309,16 @@
                 </div>
             </div>
             
-            <!-- Compact translucent HUD -->
-            <div id="hud" class="hud-container hidden">
+            <!-- HUD -->
+            <div id="hud" class="hidden">
                 <div class="hud-item">
-                    <span class="bar-label">HP</span>
-                    <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
+                    HEALTH: <div class="health-bar"><div class="health-fill" id="healthFill" style="width: 100%"></div></div>
                 </div>
                 <div class="hud-item">
-                    <span class="bar-label">PWR</span>
-                    <div class="special-bar"><div class="special-fill" id="specialFill" style="width: 100%"></div></div>
-                </div>
-                <div class="hud-item" style="margin-left: 10px;">
-                    <span id="scoreDisplay">0</span>
+                    SCORE: <span id="scoreDisplay">0</span>
                 </div>
                 <div class="hud-item">
-                    LVL <span id="levelDisplay">1</span>
+                    LEVEL: <span id="levelDisplay">1</span>
                 </div>
             </div>
             
@@ -426,10 +397,6 @@
             enemy_shadowlord_float1: null,
             enemy_shadowlord_float2: null,
             enemy_shadowlord_attack: null,
-            enemy_overlord_idle: null,
-            enemy_overlord_float1: null,
-            enemy_overlord_float2: null,
-            enemy_overlord_attack: null,
             // Background images
             bg_level1_cemetery: null,
             bg_level2_forge: null,
@@ -438,8 +405,6 @@
         
         let assetsLoaded = 0;
         const totalAssets = 24; // 4 player sprites + 16 enemy sprites + 1 title screen + 3 backgrounds
-        
-        const CACHE_VERSION = 'v2-' + Date.now(); // Cache-busting version
         
         function loadImage(src) {
             return new Promise((resolve, reject) => {
@@ -453,8 +418,7 @@
                     assetsLoaded++;
                     resolve(null);
                 };
-                // Append cache-busting query parameter
-                img.src = src + '?' + CACHE_VERSION;
+                img.src = src;
             });
         }
         
@@ -488,10 +452,6 @@
             sprites.enemy_shadowlord_float1 = await loadImage('enemy_shadowlord_float1.png');
             sprites.enemy_shadowlord_float2 = await loadImage('enemy_shadowlord_float2.png');
             sprites.enemy_shadowlord_attack = await loadImage('enemy_shadowlord_attack.png');
-            sprites.enemy_overlord_idle = await loadImage('enemy_overlord_idle.png');
-            sprites.enemy_overlord_float1 = await loadImage('enemy_overlord_float1.png');
-            sprites.enemy_overlord_float2 = await loadImage('enemy_overlord_float2.png');
-            sprites.enemy_overlord_attack = await loadImage('enemy_overlord_attack.png');
             
             // Load background images
             sprites.bg_level1_cemetery = await loadImage('bg_level1_cemetery.jpg');
@@ -675,45 +635,6 @@
             osc.stop(now + duration);
         }
         
-        // Create distorted bass for power chord
-        function createDistortedBass(frequency, duration) {
-            if (!audioCtx) return;
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const filter = audioCtx.createBiquadFilter();
-            const distortion = audioCtx.createWaveShaper();
-            
-            // Distortion curve
-            const samples = 44100;
-            const curve = new Float32Array(samples);
-            for (let i = 0; i < samples; i++) {
-                const x = i * 2 / samples - 1;
-                curve[i] = (Math.PI + 30) * x / (Math.PI + 30 * Math.abs(x));
-            }
-            distortion.curve = curve;
-            distortion.oversample = '4x';
-            
-            osc.type = 'sawtooth';
-            osc.frequency.value = frequency;
-            
-            filter.type = 'lowpass';
-            filter.frequency.value = 200;
-            filter.Q.value = 10;
-            
-            osc.connect(distortion);
-            distortion.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGain);
-            
-            const now = audioCtx.currentTime;
-            gain.gain.setValueAtTime(0.5, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-            
-            osc.start(now);
-            osc.stop(now + duration);
-        }
-        
         // Sound Effects
         function playSound(sound) {
             if (!audioCtx) return;
@@ -743,13 +664,6 @@
                     [110, 82, 55, 41].forEach((freq, i) => {
                         setTimeout(() => createGuitarSound(freq, 0.8), i * 300);
                     });
-                    break;
-                case 'powerChord':
-                    // Heavy power chord sound
-                    createGuitarSound(82.41, 0.8);  // Low E
-                    createGuitarSound(110, 0.8);    // A
-                    createGuitarSound(164.81, 0.8);  // E octave
-                    createDistortedBass(55, 0.6);
                     break;
             }
         }
@@ -867,10 +781,11 @@
         }
         
         class Particle extends Entity {
-            constructor(x, y, color, speed, life, angle = null) {
+            constructor(x, y, color, speed, life) {
                 super(x, y, 4, 4);
-                this.vx = angle !== null ? Math.cos(angle) * speed : (Math.random() - 0.5) * speed * 2;
-                this.vy = angle !== null ? Math.sin(angle) * speed : (Math.random() - 0.5) * speed * 2;
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
                 this.color = color;
                 this.life = life;
                 this.maxLife = life;
@@ -895,17 +810,10 @@
             constructor() {
                 super(canvas.width / 2, canvas.height - 100, 80, 80);
                 this.speed = 250;
-                this.maxHealth = 120;  // Extra health for survivability
-                this.health = this.maxHealth;
+                this.health = 100;
+                this.maxHealth = 100;
                 this.attackCooldown = 0;
                 this.attackDuration = 0;
-                // Special attack (Power Chord)
-                this.specialCooldown = 0;        // Current cooldown timer
-                this.specialMaxCooldown = 8;     // 8 second cooldown
-                this.specialRadius = 200;        // Damage radius
-                this.specialDamage = 50;         // Base damage
-                this.specialActive = false;      // For visual effect
-                this.specialDuration = 0;        // How long the effect shows
                 this.facing = 1; // 1 = right, -1 = left
                 this.invulnerable = 0;
                 this.powerLevel = 1;
@@ -953,16 +861,9 @@
                 // Attack
                 if (this.attackCooldown > 0) this.attackCooldown -= dt;
                 if (this.attackDuration > 0) this.attackDuration -= dt;
-                if (this.specialCooldown > 0) this.specialCooldown -= dt;
-                if (this.specialDuration > 0) this.specialDuration -= dt;
                 
                 if ((keys[' '] || keys['Space']) && this.attackCooldown <= 0) {
                     this.attack();
-                }
-                
-                // Special attack (Power Chord) - Press 'E'
-                if ((keys['e'] || keys['E']) && this.specialCooldown <= 0 && this.powerLevel >= 1) {
-                    this.powerChord();
                 }
                 
                 // Invulnerability
@@ -999,56 +900,6 @@
                         '#ff0000',
                         speed,
                         0.3
-                    ));
-                }
-            }
-            
-            powerChord() {
-                this.specialCooldown = this.specialMaxCooldown;
-                this.specialDuration = 0.5;
-                this.specialActive = true;
-                playSound('powerChord');
-                
-                // Screen shake
-                screenShake = 0.5;
-                
-                // Damage all enemies within radius
-                enemies.forEach(enemy => {
-                    const dx = enemy.x - this.x;
-                    const dy = enemy.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < this.specialRadius) {
-                        // Damage falls off with distance
-                        const damageMultiplier = 1 - (dist / this.specialRadius) * 0.5;
-                        enemy.takeDamage(this.specialDamage * this.powerLevel * damageMultiplier);
-                    }
-                });
-                
-                // Create radial burst particles
-                for (let i = 0; i < 24; i++) {
-                    const angle = (i / 24) * Math.PI * 2;
-                    const speed = 300 + Math.random() * 100;
-                    particles.push(new Particle(
-                        this.x,
-                        this.y,
-                        '#ff0066',
-                        speed,
-                        0.5,
-                        angle
-                    ));
-                }
-                
-                // Create inner burst
-                for (let i = 0; i < 16; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 100 + Math.random() * 150;
-                    particles.push(new Particle(
-                        this.x,
-                        this.y,
-                        '#ffff00',
-                        speed,
-                        0.3,
-                        angle
                     ));
                 }
             }
@@ -1120,29 +971,6 @@
                     ctx.shadowBlur = 0;
                 }
                 
-                // Power Chord visual effect
-                if (this.specialDuration > 0) {
-                    ctx.strokeStyle = '#ff0066';
-                    ctx.lineWidth = 6;
-                    ctx.shadowColor = '#ff0066';
-                    ctx.shadowBlur = 30;
-                    
-                    const progress = 1 - (this.specialDuration / 0.5);
-                    const radius = this.specialRadius * progress;
-                    
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    ctx.strokeStyle = '#ffff00';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, radius * 0.7, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    ctx.shadowBlur = 0;
-                }
-                
                 ctx.restore();
             }
         }
@@ -1192,7 +1020,7 @@
                         attack: sprites.enemy_hellknight_attack
                     };
                     this.moveAnimSpeed = 6; // Slower for heavy enemies
-                } else if (name === 'ShadowLord' || name === 'DeathMetalOverlord') {
+                } else if (name === 'ShadowLord') {
                     this.sprites = {
                         idle: sprites.enemy_shadowlord_idle,
                         move1: sprites.enemy_shadowlord_float1,
@@ -1200,21 +1028,6 @@
                         attack: sprites.enemy_shadowlord_attack
                     };
                     this.moveAnimSpeed = 4; // Slow, ominous floating
-                    
-                    if (name === 'DeathMetalOverlord') {
-                        this.sprites = {
-                            idle: sprites.enemy_overlord_idle,
-                            move1: sprites.enemy_overlord_float1,
-                            move2: sprites.enemy_overlord_float2,
-                            attack: sprites.enemy_overlord_attack
-                        };
-                        this.width = 120;
-                        this.height = 120;
-                    } else {
-                        this.width = 80;
-                        this.height = 80;
-                    }
-                    
                 }
             }
             
@@ -1300,27 +1113,6 @@
                     ));
                 }
                 
-                // Final boss death - extra epic effects
-                if (this.type.isFinalBoss) {
-                    finalBossActive = false;
-                    
-                    // Epic explosion
-                    for (let i = 0; i < 50; i++) {
-                        particles.push(new Particle(
-                            this.x, this.y,
-                            Math.random() < 0.5 ? '#ff0000' : '#8800ff',
-                            300 + Math.random() * 200,
-                            1.5
-                        ));
-                    }
-                    
-                    // Screen shake
-                    screenShake = 1.5;
-                    
-                    // Play power chord
-                    playSound('powerChord');
-                }
-                
                 // Chance to drop powerup
                 if (Math.random() < 0.15) {
                     powerups.push(new PowerUp(this.x, this.y));
@@ -1359,20 +1151,18 @@
                 if (sprite) {
                     ctx.save();
                     
-                    // Use entity dimensions (final boss is larger)
-                    const halfWidth = this.width / 2;
-                    const halfHeight = this.height / 2;
-                    const drawX = this.x - halfWidth;
-                    const drawY = this.y - halfHeight;
+                    // Position for 80x80 sprite centered on entity
+                    const drawX = this.x - 40;
+                    const drawY = this.y - 40;
                     
                     // Enemy sprites face LEFT (toward player) by default
                     // If facing right (1), we need to flip
                     if (this.facing === 1) {
-                        ctx.translate(this.x + halfWidth, this.y - halfHeight);
+                        ctx.translate(this.x + 40, this.y - 40);
                         ctx.scale(-1, 1);
-                        ctx.drawImage(sprite, 0, 0, this.width, this.height);
+                        ctx.drawImage(sprite, 0, 0, 80, 80);
                     } else {
-                        ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
+                        ctx.drawImage(sprite, drawX, drawY, 80, 80);
                     }
                     
                     ctx.restore();
@@ -1386,28 +1176,6 @@
                     ctx.fillRect(this.x - barWidth/2, this.y - 50, barWidth, barHeight);
                     ctx.fillStyle = '#ff0000';
                     ctx.fillRect(this.x - barWidth/2, this.y - 50, barWidth * (this.health / this.maxHealth), barHeight);
-                }
-                
-                // Special glow effect for final boss
-                if (this.type.isFinalBoss) {
-                    ctx.shadowColor = '#ff0000';
-                    ctx.shadowBlur = 20 + Math.sin(Date.now() / 100) * 10;
-                    
-                    // Draw health bar for final boss
-                    const barWidth = 120;
-                    const barHeight = 8;
-                    ctx.fillStyle = '#333';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 60, barWidth, barHeight);
-                    ctx.fillStyle = '#ff0000';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 60, barWidth * (this.health / this.maxHealth), barHeight);
-                    ctx.strokeStyle = '#fff';
-                    ctx.strokeRect(this.x - barWidth/2, this.y - 60, barWidth, barHeight);
-                    
-                    // Boss name
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 12px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('DEATH METAL OVERLORD', this.x, this.y - 70);
                 }
                 
                 ctx.restore();
@@ -1488,9 +1256,9 @@
                 { name: 'HellKnight', health: 100, speed: 50, damage: 25, score: 500, color: '#1a0000' }
             ],
             3: [
-                { name: 'Demon', health: 50, speed: 80, damage: 18, score: 300, color: '#4a0080' },
-                { name: 'HellKnight', health: 90, speed: 50, damage: 22, score: 500, color: '#1a0000' },
-                { name: 'ShadowLord', health: 300, speed: 35, damage: 30, score: 2000, color: '#000000' }
+                { name: 'Demon', health: 80, speed: 90, damage: 25, score: 300, color: '#4a0080' },
+                { name: 'HellKnight', health: 150, speed: 60, damage: 30, score: 500, color: '#1a0000' },
+                { name: 'ShadowLord', health: 500, speed: 40, damage: 40, score: 2000, color: '#000000' }
             ]
         };
         
@@ -1507,14 +1275,12 @@
         let levelTime = 0;
         let enemiesToSpawn = 0;
         let bossSpawned = false;
-let finalBossSpawned = false;
-let finalBossActive = false;
         
         // Level configurations
         const levelConfig = {
             1: { enemies: 15, spawnRate: 2, duration: 30 },
             2: { enemies: 25, spawnRate: 1.5, duration: 45 },
-            3: { enemies: 25, spawnRate: 1.8, duration: 60, hasBoss: true }  // Fewer enemies, slower spawns
+            3: { enemies: 40, spawnRate: 1, duration: 60, hasBoss: true }
         };
         
         // ============================================
@@ -1619,8 +1385,6 @@ let finalBossActive = false;
             demonsKilled = 0;
             currentLevel = 1;
             bossSpawned = false;
-            finalBossSpawned = false;
-            finalBossActive = false;
             enemiesToSpawn = levelConfig[1].enemies;
             updateHUD();
         }
@@ -1645,14 +1409,12 @@ let finalBossActive = false;
                 particles = [];
                 powerups = [];
                 bossSpawned = false;
-                finalBossSpawned = false;
-                finalBossActive = false;
                 enemiesToSpawn = levelConfig[level].enemies;
                 levelTime = 0;
                 spawnTimer = 0;
                 
                 // Heal player between levels
-                if (level > 1) player.heal(70);  // More healing between levels
+                if (level > 1) player.heal(50);
                 
                 startMusic(level);
             }, 2500);
@@ -1678,54 +1440,14 @@ let finalBossActive = false;
         function spawnBoss() {
             const bossType = { 
                 name: 'ShadowLord', 
-                health: 400,   // Reduced from 800
-                speed: 30, 
-                damage: 25,    // Reduced from 35
+                health: 800, 
+                speed: 35, 
+                damage: 35, 
                 score: 5000, 
                 color: '#000000' 
             };
             enemies.push(new Enemy(canvas.width / 2, -100, bossType));
             bossSpawned = true;
-        }
-        
-        function spawnFinalBoss() {
-            // Epic final boss - Death Metal Overlord
-            const finalBossType = { 
-                name: 'DeathMetalOverlord', 
-                health: 800, 
-                speed: 25, 
-                damage: 35, 
-                score: 10000, 
-                color: '#1a0a2e',
-                isFinalBoss: true
-            };
-            
-            // Spawn from center top with dramatic entrance
-            enemies.push(new Enemy(canvas.width / 2, -150, finalBossType));
-            finalBossSpawned = true;
-            finalBossActive = true;
-            
-            // Screen shake for dramatic effect
-            screenShake = 1.0;
-            
-            // Play dramatic sound
-            playSound('powerChord');
-            
-            // Flash effect
-            particles.push({
-                x: canvas.width / 2,
-                y: 100,
-                color: '#ff0000',
-                lifetime: 2,
-                markedForDeletion: false,
-                update: function(dt) { this.lifetime -= dt; if (this.lifetime <= 0) this.markedForDeletion = true; },
-                draw: function(ctx) {
-                    if (this.lifetime > 0) {
-                        ctx.fillStyle = `rgba(255, 0, 0, ${this.lifetime / 2})`;
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                }
-            });
         }
         
         function levelComplete() {
@@ -1734,16 +1456,7 @@ let finalBossActive = false;
             if (currentLevel < 3) {
                 startLevel(currentLevel + 1);
             } else {
-                // Level 3 complete - spawn final boss if not yet spawned
-                if (!finalBossSpawned) {
-                    // Clear remaining enemies and spawn final boss
-                    enemies = [];
-                    particles = [];
-                    spawnFinalBoss();
-                } else if (enemies.length === 0) {
-                    // Final boss defeated - victory!
-                    victory();
-                }
+                victory();
             }
         }
         
@@ -1777,18 +1490,6 @@ let finalBossActive = false;
             document.getElementById('scoreDisplay').textContent = score;
             document.getElementById('levelDisplay').textContent = currentLevel;
             document.getElementById('healthFill').style.width = (player.health / player.maxHealth * 100) + '%';
-            
-            // Update special attack cooldown display
-            const specialFill = document.getElementById('specialFill');
-            if (specialFill) {
-                const readyPercent = Math.max(0, 100 - (player.specialCooldown / player.specialMaxCooldown * 100));
-                specialFill.style.width = readyPercent + '%';
-                if (player.specialCooldown <= 0) {
-                    specialFill.classList.add('ready');
-                } else {
-                    specialFill.classList.remove('ready');
-                }
-            }
         }
         
         // ============================================
