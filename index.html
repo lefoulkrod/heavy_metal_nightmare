@@ -1351,6 +1351,7 @@
                 }
                 
                 if (this.hitFlash > 0) this.hitFlash -= dt;
+            }
             
             summonMinions() {
                 // Summon 3-5 weak skeletons around the boss
@@ -1405,7 +1406,6 @@
                     particles.push(new Particle(this.x, this.y, '#ff4400', 100, 0.3));
                 }
                 playSound('powerChord');
-            }
             }
             
             takeDamage(amount) {
