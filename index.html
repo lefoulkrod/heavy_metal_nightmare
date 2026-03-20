@@ -1091,6 +1091,27 @@
                     }
                 });
                 
+                // Destroy boss fireballs/projectiles within radius (defensive use)
+                bossProjectiles.forEach(projectile => {
+                    const dx = projectile.x - this.x;
+                    const dy = projectile.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < this.specialRadius) {
+                        projectile.markedForDeletion = true;
+                        
+                        // Create destruction particles for each destroyed fireball
+                        for (let i = 0; i < 8; i++) {
+                            particles.push(new Particle(
+                                projectile.x,
+                                projectile.y,
+                                '#ff4400',
+                                150,
+                                0.3
+                            ));
+                        }
+                    }
+                });
+                
                 // Create radial burst particles
                 for (let i = 0; i < 24; i++) {
                     const angle = (i / 24) * Math.PI * 2;
