@@ -901,7 +901,7 @@
             constructor(x, y, targetX, targetY, damage = 20) {
                 super(x, y, 24, 24);
                 const angle = Math.atan2(targetY - y, targetX - x);
-                const speed = 200;
+                const speed = 150;  // Reduced from 200 for better dodgeability
                 this.vx = Math.cos(angle) * speed;
                 this.vy = Math.sin(angle) * speed;
                 this.damage = damage;
@@ -1278,8 +1278,11 @@
                         this.width = 120;
                         this.height = 120;
                         this.specialAttackTimer = 0;
-                        this.specialAttackCooldown = 2;  // Attack every 2 seconds
-                        this.minionsSummoned = 0;
+                        this.specialAttackCooldown = 4;  // Attack every 4 seconds - gives player time to react
+                        this.attackPhase = 'idle';  // 'idle', 'attacking', 'vulnerable'
+                        this.phaseTimer = 0;
+                        this.minionCooldown = 0;
+                        this.minionCooldownMax = 12;  // Minions every 12 seconds
                     } else {
                         this.width = 80;
                         this.height = 80;
@@ -1324,21 +1327,39 @@
                 
                 super.update(dt);
                 
-                // Special attacks for Death Metal Overlord
+                // Special attacks for Death Metal Overlord - PHASED BOSS FIGHT
                 if (this.type.isFinalBoss && this.specialAttackTimer !== undefined) {
                     this.specialAttackTimer += dt;
+                    this.minionCooldown += dt;
                     
-                    if (this.specialAttackTimer >= this.specialAttackCooldown) {
-                        this.specialAttackTimer = 0;
-                        
-                        // Choose attack type
-                        if (Math.random() < 0.4) {
-                            // Summon minions (40% chance)
-                            this.summonMinions();
-                        } else {
-                            // Fireball volley (60% chance)
-                            this.shootFireballs();
+                    // Phase-based behavior with clear attack windows
+                    if (this.attackPhase === 'idle' && this.specialAttackTimer >= this.specialAttackCooldown) {
+                        // Enter attack phase
+                        this.attackPhase = 'attacking';
+                        this.phaseTimer = 1.5;  // Attack lasts 1.5 seconds
+                        this.shootFireballs();
+                    } else if (this.attackPhase === 'attacking') {
+                        this.phaseTimer -= dt;
+                        if (this.phaseTimer <= 0) {
+                            // Enter vulnerable phase - player can attack freely
+                            this.attackPhase = 'vulnerable';
+                            this.phaseTimer = 3;  // 3 seconds of vulnerability
+                            this.vx = 0;
+                            this.vy = 0;
                         }
+                    } else if (this.attackPhase === 'vulnerable') {
+                        this.phaseTimer -= dt;
+                        if (this.phaseTimer <= 0) {
+                            // Return to idle
+                            this.attackPhase = 'idle';
+                            this.specialAttackTimer = 0;
+                        }
+                    }
+                    
+                    // Minion spawning on separate cooldown
+                    if (this.minionCooldown >= this.minionCooldownMax) {
+                        this.minionCooldown = 0;
+                        this.summonMinions();
                     }
                 }
                 
@@ -1356,54 +1377,65 @@
             summonMinions() {
                 // Summon 2-3 weak skeletons around the boss
                 const count = 2 + Math.floor(Math.random() * 2);
+                
+                // Visual effect at boss position
+                for (let i = 0; i < 15; i++) {
+                    particles.push(new Particle(this.x, this.y, '#9900ff', 150, 0.5));
+                }
+                
                 for (let i = 0; i < count; i++) {
-                    const angle = (Math.PI * 2 * i) / count;
-                    const dist = 150;
-                    const x = this.x + Math.cos(angle) * dist;
-                    const y = this.y + Math.sin(angle) * dist;
+                    const angle = (Math.PI * 2 * i) / count + (this.facing > 0 ? 0 : Math.PI);
+                    const dist = 120 + Math.random() * 30;
+                    
+                    // Calculate spawn position relative to boss
+                    let spawnX = this.x + Math.cos(angle) * dist;
+                    let spawnY = this.y + Math.sin(angle) * dist;
+                    
+                    // Clamp to screen bounds but allow spawning near edges
+                    spawnX = Math.max(40, Math.min(canvas.width - 40, spawnX));
+                    spawnY = Math.max(40, Math.min(canvas.height - 40, spawnY));
                     
                     // Create weak minion
                     const minionType = {
                         name: 'Skeleton',
-                        health: 15,  // Very low health
-                        speed: 80,
+                        health: 25,  // Low health - easy to kill
+                        speed: 100,
                         damage: 5,
-                        score: 10,
+                        score: 25,
                         color: '#444444'
                     };
                     
-                    // Only spawn if on screen
-                    if (x > 0 && x < canvas.width && y > 0 && y < canvas.height) {
-                        enemies.push(new Enemy(x, y, minionType));
+                    const minion = new Enemy(spawnX, spawnY, minionType);
+                    enemies.push(minion);
+                    
+                    // Spawn particles at actual spawn location
+                    for (let j = 0; j < 5; j++) {
+                        particles.push(new Particle(spawnX, spawnY, '#9900ff', 100, 0.4));
                     }
                 }
                 
-                // Visual effect
-                for (let i = 0; i < 20; i++) {
-                    particles.push(new Particle(this.x, this.y, '#9900ff', 150, 0.5));
-                }
                 playSound('powerChord');
             }
             
             shootFireballs() {
-                // Shoot 5 fireballs in a spread pattern toward player
+                // Shoot 3 fireballs in a focused spread pattern toward player
                 const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
-                const spread = 0.3; // Spread angle in radians
+                const spread = 0.25; // Spread angle in radians (tighter spread)
                 
-                for (let i = -2; i <= 2; i++) {
+                for (let i = -1; i <= 1; i++) {
                     const angle = baseAngle + (i * spread);
                     const fireball = new BossProjectile(
                         this.x, this.y,
                         this.x + Math.cos(angle) * 500,
                         this.y + Math.sin(angle) * 500,
-                        15  // Damage per fireball
+                        12  // Reduced damage per fireball
                     );
                     bossProjectiles.push(fireball);
                 }
                 
                 // Visual effect
-                for (let i = 0; i < 10; i++) {
-                    particles.push(new Particle(this.x, this.y, '#ff4400', 100, 0.3));
+                for (let i = 0; i < 8; i++) {
+                    particles.push(new Particle(this.x, this.y, '#ff4400', 80, 0.3));
                 }
                 playSound('powerChord');
             }
@@ -1535,8 +1567,8 @@
                     ctx.restore();
                 }
                 
-                // Health bar for tougher enemies
-                if (this.maxHealth > 30) {
+                // Health bar for tougher enemies (but not final boss - it has its own)
+                if (this.maxHealth > 30 && !this.type.isFinalBoss) {
                     const barWidth = 50;
                     const barHeight = 6;
                     ctx.fillStyle = '#333';
@@ -1547,24 +1579,50 @@
                 
                 // Special glow effect for final boss
                 if (this.type.isFinalBoss) {
-                    ctx.shadowColor = '#ff0000';
+                    // Different glow colors based on phase
+                    let glowColor = '#ff0000';
+                    if (this.attackPhase === 'vulnerable') {
+                        glowColor = '#00ff00';  // Green glow when vulnerable
+                    } else if (this.attackPhase === 'attacking') {
+                        glowColor = '#ff6600';  // Orange glow when attacking
+                    }
+                    ctx.shadowColor = glowColor;
                     ctx.shadowBlur = 20 + Math.sin(Date.now() / 100) * 10;
                     
                     // Draw health bar for final boss
-                    const barWidth = 120;
-                    const barHeight = 8;
-                    ctx.fillStyle = '#333';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 60, barWidth, barHeight);
-                    ctx.fillStyle = '#ff0000';
-                    ctx.fillRect(this.x - barWidth/2, this.y - 60, barWidth * (this.health / this.maxHealth), barHeight);
-                    ctx.strokeStyle = '#fff';
-                    ctx.strokeRect(this.x - barWidth/2, this.y - 60, barWidth, barHeight);
+                    const barWidth = 140;
+                    const barHeight = 10;
+                    const barY = this.y - 70;
                     
-                    // Boss name
+                    // Background
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(this.x - barWidth/2, barY, barWidth, barHeight);
+                    
+                    // Health fill
+                    const healthPercent = this.health / this.maxHealth;
+                    ctx.fillStyle = healthPercent > 0.5 ? '#ff0000' : healthPercent > 0.25 ? '#ff6600' : '#ff0066';
+                    ctx.fillRect(this.x - barWidth/2, barY, barWidth * healthPercent, barHeight);
+                    
+                    // Border
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x - barWidth/2, barY, barWidth, barHeight);
+                    
+                    // Boss name and phase indicator
                     ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 12px Arial';
+                    ctx.font = 'bold 14px Arial';
                     ctx.textAlign = 'center';
-                    ctx.fillText('DEATH METAL OVERLORD', this.x, this.y - 70);
+                    ctx.fillText('DEATH METAL OVERLORD', this.x, this.y - 80);
+                    
+                    // Phase indicator below health bar
+                    ctx.font = 'bold 11px Arial';
+                    if (this.attackPhase === 'vulnerable') {
+                        ctx.fillStyle = '#00ff00';
+                        ctx.fillText('⚡ VULNERABLE ⚡', this.x, this.y - 55);
+                    } else if (this.attackPhase === 'attacking') {
+                        ctx.fillStyle = '#ff6600';
+                        ctx.fillText('🔥 ATTACKING 🔥', this.x, this.y - 55);
+                    }
                 }
                 
                 ctx.restore();
@@ -1838,9 +1896,9 @@ let finalBossDefeated = false;
             // Epic final boss - Death Metal Overlord
             const finalBossType = { 
                 name: 'DeathMetalOverlord', 
-                health: 800, 
+                health: 600,  // Reduced from 800 for better pacing
                 speed: 25, 
-                damage: 35, 
+                damage: 20,   // Reduced from 35 - contact damage
                 score: 10000, 
                 color: '#1a0a2e',
                 isFinalBoss: true
@@ -1869,6 +1927,29 @@ let finalBossDefeated = false;
                     if (this.lifetime > 0) {
                         ctx.fillStyle = `rgba(255, 0, 0, ${this.lifetime / 2})`;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+            });
+            
+            // Boss fight tip message
+            particles.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                lifetime: 4,
+                markedForDeletion: false,
+                update: function(dt) { this.lifetime -= dt; if (this.lifetime <= 0) this.markedForDeletion = true; },
+                draw: function(ctx) {
+                    if (this.lifetime > 0) {
+                        const alpha = Math.min(1, this.lifetime);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+                        ctx.font = 'bold 20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('BOSS FIGHT!', this.x, this.y - 60);
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = `rgba(150, 255, 150, ${alpha})`;
+                        ctx.fillText('Attack during VULNERABLE phase (green glow)', this.x, this.y - 30);
+                        ctx.fillStyle = `rgba(255, 150, 100, ${alpha})`;
+                        ctx.fillText('Dodge during ATTACKING phase (orange glow)', this.x, this.y - 10);
                     }
                 }
             });
