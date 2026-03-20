@@ -194,6 +194,45 @@
             margin: 10px 0;
         }
         
+        .high-score {
+            font-size: 22px;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffaa00;
+            margin: 10px 0;
+        }
+        
+        .new-high-score {
+            font-size: 28px;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+            margin: 15px 0;
+            animation: pulse 0.8s ease-in-out infinite;
+        }
+        
+        .title-high-score {
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffaa00;
+            margin: 20px 0 10px 0;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #8b0000;
+            border-radius: 8px;
+        }
+        
+        .btn-reset {
+            font-size: 18px;
+            padding: 10px 25px;
+            background: linear-gradient(180deg, #444 0%, #222 100%);
+            border: 2px solid #666;
+            margin-top: 20px;
+        }
+        
+        .btn-reset:hover {
+            background: linear-gradient(180deg, #8b0000 0%, #4a0080 100%);
+            border-color: #ff0000;
+        }
+        
         /* Title Screen Styles */
         #titleScreen {
             padding: 0;
@@ -301,6 +340,8 @@
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
                     <p class="click-prompt">Click to Start</p>
                     <button class="btn" id="startBtn">ENTER THE ABYSS</button>
+                    <div class="title-high-score" id="titleHighScore">High Score: 0</div>
+                    <button class="btn btn-reset" id="resetHighScoreBtn">Reset High Score</button>
                     <div class="controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
@@ -336,6 +377,8 @@
                 <h2>☠️ YOU DIED ☠️</h2>
                 <p class="stats">Final Score: <span id="finalScore">0</span></p>
                 <p class="stats">Level Reached: <span id="finalLevel">1</span></p>
+                <p class="high-score" id="gameOverHighScore">High Score: 0</p>
+                <p class="new-high-score hidden" id="gameOverNewHighScore">🔥 NEW HIGH SCORE! 🔥</p>
                 <button class="btn" id="restartBtn">RISE AGAIN</button>
             </div>
             
@@ -345,6 +388,8 @@
                 <p class="subtitle">The Abyss has been conquered!</p>
                 <p class="stats">Final Score: <span id="victoryScore">0</span></p>
                 <p class="stats">Demons Slain: <span id="demonsSlain">0</span></p>
+                <p class="high-score" id="victoryHighScore">High Score: 0</p>
+                <p class="new-high-score hidden" id="victoryNewHighScore">🔥 NEW HIGH SCORE! 🔥</p>
                 <button class="btn" id="playAgainBtn">SHRED AGAIN</button>
             </div>
         </div>
@@ -370,6 +415,36 @@
         };
         
         let currentState = GameState.LOADING;
+        
+        // ============================================
+        // HIGH SCORE PERSISTENCE
+        // ============================================
+        
+        function getHighScore() {
+            return parseInt(localStorage.getItem('hmn_highScore')) || 0;
+        }
+        
+        function setHighScore(newScore) {
+            localStorage.setItem('hmn_highScore', newScore);
+        }
+        
+        function resetHighScore() {
+            localStorage.removeItem('hmn_highScore');
+        }
+        
+        function updateTitleHighScore() {
+            const highScore = getHighScore();
+            document.getElementById('titleHighScore').textContent = 'High Score: ' + highScore;
+        }
+        
+        function checkAndUpdateHighScore(currentScore) {
+            const highScore = getHighScore();
+            if (currentScore > highScore) {
+                setHighScore(currentScore);
+                return true;
+            }
+            return false;
+        }
         
         // ============================================
         // ASSET LOADING
@@ -472,6 +547,9 @@
             currentState = GameState.MENU;
             document.getElementById('loadingScreen').classList.add('hidden');
             document.getElementById('titleScreen').classList.remove('hidden');
+            
+            // Update high score display on title screen
+            updateTitleHighScore();
         }
         let currentLevel = 1;
         let score = 0;
@@ -1465,8 +1543,22 @@
             stopMusic();
             playSound('gameOver');
             
+            // Check and update high score
+            const isNewHighScore = checkAndUpdateHighScore(score);
+            const highScore = getHighScore();
+            
             document.getElementById('finalScore').textContent = score;
             document.getElementById('finalLevel').textContent = currentLevel;
+            document.getElementById('gameOverHighScore').textContent = 'High Score: ' + highScore;
+            
+            // Show/hide new high score message
+            const newHighScoreEl = document.getElementById('gameOverNewHighScore');
+            if (isNewHighScore) {
+                newHighScoreEl.classList.remove('hidden');
+            } else {
+                newHighScoreEl.classList.add('hidden');
+            }
+            
             document.getElementById('gameOverScreen').classList.remove('hidden');
             document.getElementById('hud').classList.add('hidden');
         }
@@ -1480,8 +1572,22 @@
                 setTimeout(() => createGuitarSound(freq, 0.5), i * 150);
             });
             
+            // Check and update high score
+            const isNewHighScore = checkAndUpdateHighScore(score);
+            const highScore = getHighScore();
+            
             document.getElementById('victoryScore').textContent = score;
             document.getElementById('demonsSlain').textContent = demonsKilled;
+            document.getElementById('victoryHighScore').textContent = 'High Score: ' + highScore;
+            
+            // Show/hide new high score message
+            const newHighScoreEl = document.getElementById('victoryNewHighScore');
+            if (isNewHighScore) {
+                newHighScoreEl.classList.remove('hidden');
+            } else {
+                newHighScoreEl.classList.add('hidden');
+            }
+            
             document.getElementById('victoryScreen').classList.remove('hidden');
             document.getElementById('hud').classList.add('hidden');
         }
@@ -1614,6 +1720,12 @@
             document.getElementById('hud').classList.remove('hidden');
             initGame();
             startLevel(1);
+        });
+        
+        // Reset High Score button
+        document.getElementById('resetHighScoreBtn').addEventListener('click', () => {
+            resetHighScore();
+            updateTitleHighScore();
         });
         
         // Prevent context menu on canvas
