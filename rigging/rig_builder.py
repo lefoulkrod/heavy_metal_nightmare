@@ -44,12 +44,44 @@ def create_metal_warrior_rig() -> Rig:
     if right_hip:
         right_hip.child = right_leg
     
-    guitar = create_guitar("guitar", body_width=45, body_height=60, neck_length=50)
-    # Attach guitar to LEFT WRIST so it moves with the arm
-    # This allows for chopping attacks where guitar follows hand motion
+    # Create TWO guitar parts for different poses
+    
+    # Guitar for idle/walk - attached to torso, horizontal playing position
+    # Pivot at body (where it rests against torso)
+    guitar_torso = create_guitar(
+        "guitar_torso",
+        body_width=45,
+        body_height=60,
+        neck_length=50,
+        pivot_at_neck=False  # Pivot at body for playing position
+    )
+    
+    # Guitar for attack - attached to wrist, chopping motion
+    # Pivot at neck (where hand grips)
+    guitar_attack = create_guitar(
+        "guitar_attack",
+        body_width=45,
+        body_height=60,
+        neck_length=50,
+        pivot_at_neck=True  # Pivot at neck for attack motion
+    )
+    
+    # Attach guitar_torso to a NEW joint on torso (guitar_mount)
+    # Position: center of torso, slightly below chest
+    torso.add_joint(
+        "guitar_mount",
+        x=0.5,  # Center of torso
+        y=0.6,  # Slightly below chest
+        child=guitar_torso,
+        angle=0,  # Will be set by pose
+        angle_min=-180,
+        angle_max=180
+    )
+    
+    # Attach guitar_attack to left wrist (for attack poses)
     left_wrist = left_arm.find_joint("wrist_left")
     if left_wrist:
-        left_wrist.child = guitar
+        left_wrist.child = guitar_attack
     
     rig = Rig("MetalWarrior", torso, canvas_size=(200, 250))
     rig.root_x = 100

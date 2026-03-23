@@ -1,5 +1,6 @@
 """
 Part definitions for the Metal Warrior character.
+Heavy Metal Warrior - Female character with BC Rich Warlock guitar
 """
 
 from PIL import Image, ImageDraw
@@ -9,15 +10,18 @@ sys.path.insert(0, '/home/computron/pil_rigging_system')
 from core.part import Part
 
 
-# Metal color palette
+# Heavy Metal Warrior color palette
 METAL_COLORS = {
+    'black_leather': (26, 26, 26),      # #1A1A1A - torso
     'dark_leather': (40, 30, 30),
     'brown_leather': (80, 50, 30),
-    'silver': (180, 190, 200),
+    'silver': (192, 192, 192),          # #C0C0C0 - accents
     'dark_silver': (120, 130, 140),
     'gold': (200, 170, 80),
-    'skin': (255, 220, 177),
+    'skin': (255, 219, 172),            # #FFDBAC - fair skin
     'black': (20, 20, 25),
+    'vibrant_red': (204, 0, 0),         # #CC0000 - hair and guitar
+    'black_hardware': (51, 51, 51),     # #333333 - guitar hardware
     'red_accent': (180, 30, 30),
 }
 
@@ -27,20 +31,43 @@ def create_guitar(
     body_width: int = 50,
     body_height: int = 70,
     neck_length: int = 60,
-    body_color: Tuple[int, int, int] = (60, 30, 20),
-    neck_color: Tuple[int, int, int] = (120, 80, 50),
-    accent_color: Tuple[int, int, int] = (200, 170, 80)
+    body_color: Tuple[int, int, int] = METAL_COLORS['vibrant_red'],
+    neck_color: Tuple[int, int, int] = (30, 30, 30),
+    accent_color: Tuple[int, int, int] = METAL_COLORS['silver'],
+    pivot_at_neck: bool = False
 ) -> Part:
-    """Create an electric guitar weapon."""
+    """Create a BC Rich Warlock style guitar - sharp, angular, weapon-like.
+    
+    Args:
+        name: Part name
+        body_width: Width of guitar body
+        body_height: Height of guitar body
+        neck_length: Length of neck/headstock
+        body_color: Main body color
+        neck_color: Neck/headstock color
+        accent_color: Accent color for hardware
+        pivot_at_neck: If True, pivot at neck/headstock (for attack poses).
+                      If False, pivot at body (for playing/idle poses).
+    """
     total_height = body_height + neck_length
-    total_width = body_width + 10
+    total_width = body_width + 30  # Extra width for the angular horns
+    
+    # Set pivot based on usage
+    if pivot_at_neck:
+        # Pivot at neck/headstock - hand grips here for attack
+        pivot_x = 0.5
+        pivot_y = 0.15  # Near top where headstock is
+    else:
+        # Pivot at body - rests against torso for playing
+        pivot_x = 0.5
+        pivot_y = 0.7  # Near body center
     
     part = Part(
         name=name,
         width=total_width,
         height=total_height,
-        pivot_x=0.5,
-        pivot_y=0.15,  # Hold at top of neck
+        pivot_x=pivot_x,
+        pivot_y=pivot_y,
         color=body_color
     )
     
@@ -53,73 +80,132 @@ def create_guitar(
         body_top = neck_length
         body_bottom = total_height - 5
         
-        # Guitar neck
-        neck_width = 12
+        # Guitar neck (black)
+        neck_width = 14
         draw.rectangle(
-            [cx - neck_width//2, neck_top, cx + neck_width//2, body_top + 10],
+            [cx - neck_width//2, neck_top, cx + neck_width//2, body_top + 15],
             fill=neck_color,
-            outline=tuple(max(0, c-30) for c in neck_color),
+            outline=METAL_COLORS['black_hardware'],
             width=2
         )
         
-        # Frets on neck
-        for i in range(1, 8):
-            fret_y = neck_top + i * (body_top - neck_top) // 8
+        # Frets on neck (silver)
+        for i in range(1, 10):
+            fret_y = neck_top + i * (body_top - neck_top) // 10
             draw.line([(cx - neck_width//2, fret_y), (cx + neck_width//2, fret_y)],
-                     fill=(200, 200, 200), width=1)
+                     fill=METAL_COLORS['silver'], width=1)
         
-        # Guitar body (hourglass shape)
-        draw.ellipse(
-            [cx - body_width//3, body_top, cx + body_width//3, body_top + body_height//2],
-            fill=body_color,
-            outline=tuple(max(0, c-40) for c in body_color),
-            width=2
-        )
-        draw.ellipse(
-            [cx - body_width//2, body_top + body_height//3, cx + body_width//2, body_bottom],
-            fill=body_color,
-            outline=tuple(max(0, c-40) for c in body_color),
-            width=2
-        )
+        # BC Rich Warlock body - sharp angular shape with pointed horns
+        # Upper horns (pointed, aggressive)
+        upper_left_horn = [
+            (cx - 5, body_top + 5),
+            (cx - body_width//2 - 10, body_top - 5),
+            (cx - body_width//3, body_top + 15)
+        ]
+        upper_right_horn = [
+            (cx + 5, body_top + 5),
+            (cx + body_width//2 + 10, body_top - 5),
+            (cx + body_width//3, body_top + 15)
+        ]
         
-        # Bridge
+        # Main body - angular V-shape
+        body_points = [
+            (cx - body_width//2 - 5, body_top + 10),   # Upper left
+            (cx - body_width//3, body_top + body_height//3),  # Left waist
+            (cx - body_width//2, body_bottom - 15),    # Lower left horn tip
+            (cx, body_bottom - 5),                      # Bottom center
+            (cx + body_width//2, body_bottom - 15),    # Lower right horn tip
+            (cx + body_width//3, body_top + body_height//3),  # Right waist
+            (cx + body_width//2 + 5, body_top + 10),   # Upper right
+            (cx + 5, body_top + 5),                   # Back to neck right
+            (cx - 5, body_top + 5),                   # Back to neck left
+        ]
+        
+        # Draw main body
+        draw.polygon(body_points, fill=body_color, 
+                    outline=METAL_COLORS['black_hardware'], width=3)
+        
+        # Draw upper horns
+        draw.polygon(upper_left_horn, fill=body_color, 
+                    outline=METAL_COLORS['black_hardware'], width=2)
+        draw.polygon(upper_right_horn, fill=body_color, 
+                    outline=METAL_COLORS['black_hardware'], width=2)
+        
+        # Bridge (black hardware)
         bridge_y = body_top + body_height * 2 // 3
         draw.rectangle(
-            [cx - 12, bridge_y - 3, cx + 12, bridge_y + 3],
-            fill=(150, 150, 150),
-            outline=(100, 100, 100)
+            [cx - 15, bridge_y - 4, cx + 15, bridge_y + 4],
+            fill=METAL_COLORS['black_hardware'],
+            outline=METAL_COLORS['silver'],
+            width=2
         )
         
-        # Pickups
-        pickup_y = body_top + body_height // 3
-        draw.rectangle(
-            [cx - 10, pickup_y - 4, cx + 10, pickup_y + 4],
-            fill=(30, 30, 30),
-            outline=(100, 100, 100)
-        )
+        # Dual humbucker pickups (black)
+        pickup1_y = body_top + body_height // 3
+        pickup2_y = body_top + body_height // 2
+        for py in [pickup1_y, pickup2_y]:
+            draw.rectangle(
+                [cx - 12, py - 5, cx + 12, py + 5],
+                fill=METAL_COLORS['black_hardware'],
+                outline=METAL_COLORS['silver'],
+                width=2
+            )
+            # Pickup poles
+            for i in range(-2, 3):
+                pole_x = cx + i * 5
+                draw.ellipse([pole_x - 2, py - 3, pole_x + 2, py + 3], 
+                           fill=METAL_COLORS['silver'])
         
-        # Metal accents/spikes on body
+        # Volume/tone knobs (silver)
+        for i, kx in enumerate([cx - 10, cx + 10]):
+            ky = body_bottom - 25 + i * 3
+            draw.ellipse([kx - 4, ky - 4, kx + 4, ky + 4], 
+                        fill=METAL_COLORS['silver'],
+                        outline=METAL_COLORS['black_hardware'], width=1)
+        
+        # Sharp metal spikes on body (silver accents)
         spike_positions = [
-            (cx - body_width//3, body_top + 10),
-            (cx + body_width//3, body_top + 15),
-            (cx - body_width//2 + 5, body_bottom - 15),
-            (cx + body_width//2 - 5, body_bottom - 10),
+            (cx - body_width//2 - 5, body_top + 15),
+            (cx + body_width//2 + 5, body_top + 15),
+            (cx - body_width//2, body_bottom - 15),
+            (cx + body_width//2, body_bottom - 15),
         ]
         for sx, sy in spike_positions:
             draw.polygon(
-                [(sx, sy - 6), (sx - 3, sy + 2), (sx + 3, sy + 2)],
+                [(sx, sy - 8), (sx - 4, sy + 3), (sx + 4, sy + 3)],
                 fill=accent_color,
-                outline=tuple(max(0, c-40) for c in accent_color)
+                outline=METAL_COLORS['dark_silver']
             )
         
-        # Guitar strings
+        # Guitar strings (silver)
         for i in range(-2, 3):
             string_x = cx + i * 2
             draw.line(
-                [(string_x, neck_top), (string_x, bridge_y)],
-                fill=(220, 220, 240),
+                [(string_x, neck_top + 5), (string_x, bridge_y)],
+                fill=METAL_COLORS['silver'],
                 width=1
             )
+        
+        # Headstock (pointed Warlock style)
+        headstock_points = [
+            (cx - neck_width//2, neck_top),
+            (cx - neck_width, neck_top - 15),
+            (cx, neck_top - 20),
+            (cx + neck_width, neck_top - 15),
+            (cx + neck_width//2, neck_top)
+        ]
+        draw.polygon(headstock_points, fill=body_color,
+                    outline=METAL_COLORS['black_hardware'], width=2)
+        
+        # Tuning pegs
+        for i in range(3):
+            # Left side
+            peg_y = neck_top - 5 - i * 5
+            draw.ellipse([cx - neck_width - 3, peg_y - 2, cx - neck_width + 3, peg_y + 2],
+                        fill=METAL_COLORS['silver'])
+            # Right side
+            draw.ellipse([cx + neck_width - 3, peg_y - 2, cx + neck_width + 3, peg_y + 2],
+                        fill=METAL_COLORS['silver'])
         
         return img
     
@@ -144,24 +230,32 @@ def create_spiked_arm(name: str = "arm", length: int = 60, width: int = 18) -> P
         img = Image.new('RGBA', (width, length), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # Upper arm (armor)
+        # Upper arm (black leather armor with silver studs)
         upper_height = length // 2
         draw.rectangle(
             [2, 2, width-3, upper_height],
-            fill=METAL_COLORS['dark_silver'],
-            outline=tuple(max(0, c-40) for c in METAL_COLORS['dark_silver']),
+            fill=METAL_COLORS['black_leather'],
+            outline=METAL_COLORS['silver'],
             width=2
         )
+        
+        # Metal studs on shoulder (more aggressive)
+        for i in range(3):
+            sx = width // 2 + (i - 1) * 5
+            sy = 5
+            draw.ellipse([sx - 3, sy - 3, sx + 3, sy + 3], 
+                        fill=METAL_COLORS['silver'],
+                        outline=METAL_COLORS['dark_silver'])
         
         # Spikes on shoulder
         spike_x = width // 2
         draw.polygon(
-            [(spike_x, 0), (spike_x-4, 8), (spike_x+4, 8)],
+            [(spike_x, -2), (spike_x-5, 10), (spike_x+5, 10)],
             fill=METAL_COLORS['silver'],
             outline=METAL_COLORS['dark_silver']
         )
         
-        # Forearm (skin showing)
+        # Forearm (skin showing with leather wristband)
         forearm_start = upper_height
         draw.rectangle(
             [4, forearm_start, width-5, length-5],
@@ -170,14 +264,21 @@ def create_spiked_arm(name: str = "arm", length: int = 60, width: int = 18) -> P
             width=1
         )
         
-        # Leather wristband
+        # Spiked leather wristband
         wrist_y = length - 15
         draw.rectangle(
-            [3, wrist_y, width-4, wrist_y + 8],
-            fill=METAL_COLORS['brown_leather'],
-            outline=METAL_COLORS['dark_leather'],
+            [2, wrist_y, width-3, wrist_y + 10],
+            fill=METAL_COLORS['black_leather'],
+            outline=METAL_COLORS['silver'],
             width=2
         )
+        # Spikes on wristband
+        for i in range(3):
+            sx = 5 + i * 5
+            draw.polygon(
+                [(sx, wrist_y - 4), (sx-2, wrist_y), (sx+2, wrist_y)],
+                fill=METAL_COLORS['silver']
+            )
         
         # Hand
         hand_y = length - 8
@@ -198,7 +299,7 @@ def create_spiked_arm(name: str = "arm", length: int = 60, width: int = 18) -> P
 
 
 def create_armored_leg(name: str = "leg", length: int = 70, width: int = 20) -> Part:
-    """Create a leg with metal armor."""
+    """Create a leg with metal armor and spiked boots."""
     part = Part(
         name=name,
         width=width,
@@ -212,41 +313,52 @@ def create_armored_leg(name: str = "leg", length: int = 70, width: int = 20) -> 
         img = Image.new('RGBA', (width, length), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # Thigh (pants)
+        # Thigh (black leather pants)
         thigh_height = length // 2
         draw.rectangle(
             [2, 2, width-3, thigh_height],
-            fill=METAL_COLORS['black'],
-            outline=tuple(max(0, c-40) for c in METAL_COLORS['black']),
+            fill=METAL_COLORS['black_leather'],
+            outline=tuple(max(0, c-40) for c in METAL_COLORS['black_leather']),
             width=2
         )
         
-        # Metal knee guard
+        # Metal knee guard with spikes
         knee_y = thigh_height
         draw.rectangle(
-            [1, knee_y - 3, width-2, knee_y + 8],
+            [0, knee_y - 3, width-1, knee_y + 10],
             fill=METAL_COLORS['silver'],
             outline=METAL_COLORS['dark_silver'],
             width=2
         )
+        # Center spike on knee
+        draw.polygon(
+            [(width//2, knee_y - 6), (width//2-3, knee_y), (width//2+3, knee_y)],
+            fill=METAL_COLORS['silver']
+        )
         
-        # Shin (boot)
-        boot_start = knee_y + 5
+        # Shin (black leather boot)
+        boot_start = knee_y + 8
         draw.rectangle(
-            [3, boot_start, width-4, length-8],
-            fill=METAL_COLORS['dark_leather'],
-            outline=METAL_COLORS['black'],
+            [3, boot_start, width-4, length-10],
+            fill=METAL_COLORS['black_leather'],
+            outline=METAL_COLORS['silver'],
             width=2
         )
         
-        # Boot foot
-        foot_y = length - 8
+        # Boot foot with studs
+        foot_y = length - 10
         draw.rectangle(
             [2, foot_y, width-3, length-2],
-            fill=METAL_COLORS['brown_leather'],
-            outline=METAL_COLORS['dark_leather'],
+            fill=METAL_COLORS['black_leather'],
+            outline=METAL_COLORS['silver'],
             width=2
         )
+        
+        # Metal studs on boot
+        for i in range(4):
+            sx = 5 + i * 4
+            draw.ellipse([sx - 2, foot_y + 2, sx + 2, foot_y + 6],
+                        fill=METAL_COLORS['silver'])
         
         return img
     
@@ -257,81 +369,104 @@ def create_armored_leg(name: str = "leg", length: int = 70, width: int = 20) -> 
 
 
 def create_metal_torso(name: str = "torso", width: int = 55, height: int = 75) -> Part:
-    """Create a metal-armored torso."""
+    """Create a black leather torso with metal studs and spikes."""
     part = Part(
         name=name,
         width=width,
         height=height,
         pivot_x=0.5,
         pivot_y=0.5,
-        color=METAL_COLORS['dark_silver']
+        color=METAL_COLORS['black_leather']
     )
     
     def create_torso_image():
         img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # Main body (tapered)
+        # Main body (tapered for female proportions)
         points = [
-            (width//4, 2),
-            (width*3//4, 2),
-            (width-3, height-3),
+            (width//3, 2),           # Narrower shoulders
+            (width*2//3, 2),
+            (width-3, height-3),     # Wider hips
             (2, height-3)
         ]
         draw.polygon(
             points,
-            fill=METAL_COLORS['dark_silver'],
+            fill=METAL_COLORS['black_leather'],
             outline=METAL_COLORS['silver'],
             width=2
         )
         
-        # Chest plate detail
+        # Chest plate detail (smaller, feminine)
         chest_points = [
-            (width//3, 10),
-            (width*2//3, 10),
-            (width*2//3, height//2),
-            (width//2, height//2 + 10),
-            (width//3, height//2)
+            (width//3 + 5, 10),
+            (width*2//3 - 5, 10),
+            (width*2//3 - 5, height//2 - 5),
+            (width//2, height//2 + 5),
+            (width//3 + 5, height//2 - 5)
         ]
         draw.polygon(
             chest_points,
-            fill=METAL_COLORS['silver'],
-            outline=METAL_COLORS['gold'],
-            width=2
-        )
-        
-        # Spiked shoulder pads
-        for i in range(3):
-            sx = 5 + i * 6
-            sy = 8
-            draw.polygon(
-                [(sx, sy - 8), (sx-3, sy), (sx+3, sy)],
-                fill=METAL_COLORS['silver'],
-                outline=METAL_COLORS['dark_silver']
-            )
-            sx = width - 5 - i * 6
-            draw.polygon(
-                [(sx, sy - 8), (sx-3, sy), (sx+3, sy)],
-                fill=METAL_COLORS['silver'],
-                outline=METAL_COLORS['dark_silver']
-            )
-        
-        # Belt
-        belt_y = height * 3 // 4
-        draw.rectangle(
-            [5, belt_y, width-6, belt_y + 8],
-            fill=METAL_COLORS['brown_leather'],
-            outline=METAL_COLORS['gold'],
-            width=2
-        )
-        
-        # Belt buckle
-        draw.rectangle(
-            [width//2 - 6, belt_y - 1, width//2 + 6, belt_y + 9],
-            fill=METAL_COLORS['gold'],
+            fill=METAL_COLORS['black_leather'],
             outline=METAL_COLORS['silver'],
             width=2
         )
+        
+        # Silver studs on chest
+        for row in range(2):
+            for col in range(3):
+                sx = width//2 + (col - 1) * 8
+                sy = 18 + row * 10
+                draw.ellipse([sx - 2, sy - 2, sx + 2, sy + 2], 
+                            fill=METAL_COLORS['silver'])
+        
+        # Spiked shoulder pads (more aggressive)
+        for i in range(4):
+            # Left shoulder
+            sx = 4 + i * 5
+            sy = 6
+            draw.polygon(
+                [(sx, sy - 10), (sx-3, sy), (sx+3, sy)],
+                fill=METAL_COLORS['silver'],
+                outline=METAL_COLORS['dark_silver']
+            )
+            # Right shoulder
+            sx = width - 4 - i * 5
+            draw.polygon(
+                [(sx, sy - 10), (sx-3, sy), (sx+3, sy)],
+                fill=METAL_COLORS['silver'],
+                outline=METAL_COLORS['dark_silver']
+            )
+        
+        # Studded belt
+        belt_y = height * 3 // 4
+        draw.rectangle(
+            [3, belt_y, width-4, belt_y + 10],
+            fill=METAL_COLORS['black_leather'],
+            outline=METAL_COLORS['silver'],
+            width=2
+        )
+        
+        # Belt studs
+        for i in range(5):
+            sx = 8 + i * 10
+            draw.ellipse([sx - 3, belt_y + 2, sx + 3, belt_y + 8],
+                        fill=METAL_COLORS['silver'])
+        
+        # Belt buckle (spiked)
+        draw.rectangle(
+            [width//2 - 8, belt_y - 2, width//2 + 8, belt_y + 12],
+            fill=METAL_COLORS['silver'],
+            outline=METAL_COLORS['dark_silver'],
+            width=2
+        )
+        # Buckle spikes
+        for dx in [-6, 0, 6]:
+            draw.polygon(
+                [(width//2 + dx, belt_y - 5), (width//2 + dx - 2, belt_y), 
+                 (width//2 + dx + 2, belt_y)],
+                fill=METAL_COLORS['silver']
+            )
         
         return img
     
@@ -346,48 +481,96 @@ def create_metal_torso(name: str = "torso", width: int = 55, height: int = 75) -
     return part
 
 
-def create_metal_head(name: str = "head", size: int = 42) -> Part:
-    """Create a metal warrior head with long hair."""
+def create_metal_head(name: str = "head", size: int = 48) -> Part:
+    """Create a metal warrior head with long flowing vibrant red hair."""
     part = Part(
         name=name,
         width=size,
-        height=size,
+        height=size + 35,  # Extra height for longer hair
         pivot_x=0.5,
-        pivot_y=0.8,
+        pivot_y=0.65,  # Lower pivot for hair
         color=METAL_COLORS['skin']
     )
     
     def create_head_image():
-        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        img = Image.new('RGBA', (size, size + 35), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
-        # Face
+        face_size = size
+        
+        # Long flowing vibrant red hair (shoulder/mid-back length)
+        hair_color = METAL_COLORS['vibrant_red']
+        hair_highlight = (230, 50, 50)  # Lighter red for highlights
+        
+        # Main hair mass - flowing down
+        hair_points = [
+            (2, face_size//3),           # Left side
+            (face_size//4, 2),            # Top left
+            (face_size*3//4, 2),          # Top right
+            (face_size-2, face_size//3),  # Right side
+            (face_size-2, face_size + 25), # Bottom right
+            (face_size//2, face_size + 30), # Bottom center
+            (2, face_size + 25)            # Bottom left
+        ]
+        draw.polygon(hair_points, fill=hair_color, 
+                    outline=(150, 0, 0), width=2)
+        
+        # Hair strands/layers for flowing effect
+        for i in range(5):
+            x = face_size//4 + i * face_size//5
+            # Long flowing strands
+            draw.line([(x, 5), (x + 8, face_size + 25)], 
+                     fill=hair_highlight, width=3)
+            draw.line([(x + 3, 5), (x + 5, face_size + 20)], 
+                     fill=hair_color, width=2)
+        
+        # Bangs/fringe
+        bang_points = [
+            (face_size//4, 5),
+            (face_size*3//4, 5),
+            (face_size*3//4, face_size//3),
+            (face_size//2, face_size//3 + 5),
+            (face_size//4, face_size//3)
+        ]
+        draw.polygon(bang_points, fill=hair_color)
+        
+        # Face (slightly smaller for female proportions)
+        face_margin = 6
         draw.ellipse(
-            [4, 4, size-5, size-5],
+            [face_margin, 8, face_size - face_margin - 1, face_size - 5],
             fill=METAL_COLORS['skin'],
             outline=tuple(max(0, c-40) for c in METAL_COLORS['skin']),
             width=2
         )
         
-        # Eyes (intense, with dark makeup)
-        eye_y = size // 2 - 2
-        draw.ellipse([size//3-4, eye_y-3, size//3+2, eye_y+3], fill=(30, 30, 30))
-        draw.ellipse([size//3-2, eye_y-1, size//3, eye_y+1], fill=(200, 50, 50))
-        draw.ellipse([size*2//3-2, eye_y-3, size*2//3+4, eye_y+3], fill=(30, 30, 30))
-        draw.ellipse([size*2//3, eye_y-1, size*2//3+2, eye_y+1], fill=(200, 50, 50))
+        # Eyes (intense, with dark makeup - metal style)
+        eye_y = face_size // 2 - 2
+        # Eye shadow/makeup
+        draw.ellipse([face_size//3-6, eye_y-5, face_size//3+4, eye_y+5], 
+                    fill=(40, 40, 40))
+        draw.ellipse([face_size*2//3-4, eye_y-5, face_size*2//3+6, eye_y+5], 
+                    fill=(40, 40, 40))
         
-        # Long hair (flowing back)
-        hair_color = (40, 30, 25)
-        hair_points = [
-            (2, size//3), (size//4, 2), (size*3//4, 2),
-            (size-2, size//3), (size-2, size*2//3),
-            (size//2, size-2), (2, size*2//3)
-        ]
-        draw.polygon(hair_points, fill=hair_color)
+        # Eyes themselves (intense)
+        draw.ellipse([face_size//3-4, eye_y-3, face_size//3+2, eye_y+3], 
+                    fill=(30, 30, 30))
+        draw.ellipse([face_size//3-2, eye_y-1, face_size//3, eye_y+1], 
+                    fill=METAL_COLORS['vibrant_red'])  # Red eyes
+        draw.ellipse([face_size*2//3-2, eye_y-3, face_size*2//3+4, eye_y+3], 
+                    fill=(30, 30, 30))
+        draw.ellipse([face_size*2//3, eye_y-1, face_size*2//3+2, eye_y+1], 
+                    fill=METAL_COLORS['vibrant_red'])
         
-        for i in range(3):
-            x = size//4 + i * size//4
-            draw.line([(x, 4), (x + 5, size-5)], fill=tuple(max(0, c-20) for c in hair_color), width=2)
+        # Eyebrows (intense, arched)
+        draw.line([(face_size//3-4, eye_y-6), (face_size//3+2, eye_y-8)],
+                 fill=hair_color, width=2)
+        draw.line([(face_size*2//3-2, eye_y-8), (face_size*2//3+4, eye_y-6)],
+                 fill=hair_color, width=2)
+        
+        # Mouth (determined/fierce)
+        mouth_y = face_size * 2 // 3
+        draw.line([(face_size//2-5, mouth_y), (face_size//2+5, mouth_y)],
+                 fill=(150, 80, 80), width=2)
         
         return img
     

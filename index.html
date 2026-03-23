@@ -408,7 +408,8 @@
         
         const sprites = {
             player_idle: null,
-            player_attack: null,
+            player_attack_windup: null,
+            player_attack_strike: null,
             player_walk1: null,
             player_walk2: null,
             // Enemy sprites
@@ -439,7 +440,7 @@
         };
         
         let assetsLoaded = 0;
-        const totalAssets = 27; // 4 player sprites + 16 enemy sprites + 1 title screen + 3 backgrounds
+        const totalAssets = 28; // 5 player sprites + 16 enemy sprites + 1 title screen + 3 backgrounds
         
         const CACHE_VERSION = 'v2-' + Date.now(); // Cache-busting version
         
@@ -463,7 +464,8 @@
         async function loadAssets() {
             // Load player sprites
             sprites.player_idle = await loadImage('player_idle.png');
-            sprites.player_attack = await loadImage('player_attack.png');
+            sprites.player_attack_windup = await loadImage('player_attack_windup.png');
+            sprites.player_attack_strike = await loadImage('player_attack_strike.png');
             sprites.player_walk1 = await loadImage('player_walk1.png');
             sprites.player_walk2 = await loadImage('player_walk2.png');
             
@@ -1170,7 +1172,13 @@
                 // Determine which sprite to use
                 let sprite = null;
                 if (this.attackDuration > 0) {
-                    sprite = sprites.player_attack;
+                    // Attack animation: windup first half, strike second half
+                    const attackProgress = (0.2 - this.attackDuration) / 0.2;  // 0 to 1
+                    if (attackProgress < 0.5) {
+                        sprite = sprites.player_attack_windup;
+                    } else {
+                        sprite = sprites.player_attack_strike;
+                    }
                 } else if (this.isMoving) {
                     // Alternate between walk frames
                     sprite = (Math.floor(this.animFrame) % 2 === 0) ? sprites.player_walk1 : sprites.player_walk2;
