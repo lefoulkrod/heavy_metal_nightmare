@@ -351,29 +351,27 @@
         }
         
         .click-prompt {
-            font-size: 32px;
+            font-size: 42px;
             color: #ff0000;
-            text-shadow: 0 0 20px #8b0000, 0 0 40px #ff0000;
-            margin: 20px 0;
+            text-shadow: 0 0 20px #8b0000, 0 0 40px #ff0000, 0 0 60px #ff0000;
+            margin: 30px 0;
             animation: pulse 1.5s ease-in-out infinite;
-            letter-spacing: 4px;
+            letter-spacing: 6px;
             cursor: pointer;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            padding: 15px 50px;
-            background: linear-gradient(180deg, #8b0000 0%, #4a0080 100%);
-            border: 3px solid #ff0000;
-            border-radius: 8px;
-            transition: all 0.3s;
-            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
             font-family: 'Metal Mania', cursive;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-block;
+            touch-action: manipulation;
         }
 
         .click-prompt:hover,
         .click-prompt:active {
-            background: linear-gradient(180deg, #ff0000 0%, #8b0000 100%);
-            box-shadow: 0 0 40px #ff0000;
-            transform: scale(1.05);
+            color: #ff3333;
+            text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000, 0 0 80px #ff0000;
+            transform: scale(1.1);
         }
         
         #titleScreen h1 {
@@ -2867,12 +2865,19 @@ let finalBossDefeated = false;
         // Click on prompt text to start
         document.getElementById('startPrompt').addEventListener('click', startGame);
         
-        // Touch on prompt text
-        document.getElementById('startPrompt').addEventListener('touchstart', (e) => {
+        // Touch on prompt text - use touchend for better mobile response
+        const startPrompt = document.getElementById('startPrompt');
+        startPrompt.addEventListener('touchend', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             if (currentState === GameState.TITLE) {
                 startGame();
             }
+        }, { passive: false });
+        
+        // Also handle touchstart to prevent default behaviors
+        startPrompt.addEventListener('touchstart', (e) => {
+            e.preventDefault();
         }, { passive: false });
         
         document.getElementById('resumeBtn').addEventListener('click', () => {
