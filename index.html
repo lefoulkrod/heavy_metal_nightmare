@@ -573,6 +573,37 @@
             height: 100% !important;
             object-fit: contain;
         }
+
+        /* Exit fullscreen button - only visible in fullscreen on mobile */
+        #exitFullscreenBtn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(139, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            pointer-events: auto;
+        }
+
+        #exitFullscreenBtn.visible {
+            display: flex;
+        }
+
+        /* Show exit button in fullscreen on touch devices */
+        #gameContainer:fullscreen #exitFullscreenBtn,
+        #gameContainer:-webkit-full-screen #exitFullscreenBtn {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -580,6 +611,7 @@
     <div id="rotatePrompt">
         <div class="rotate-icon">📱</div>
         <p>Rotate to landscape for fullscreen metal!</p>
+        <p style="font-size: 16px; color: #888; margin-top: 10px;">Then tap ENTER THE ABYSS</p>
     </div>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="1000" height="600"></canvas>
@@ -673,6 +705,9 @@
                 </div>
                 <div class="pause-btn" data-key="p">⏸</div>
             </div>
+            
+            <!-- Exit Fullscreen Button (mobile) -->
+            <button id="exitFullscreenBtn">✕</button>
         </div>
     </div>
 
@@ -2449,6 +2484,13 @@ let finalBossDefeated = false;
             initAudio();
             document.getElementById('titleScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
+            
+            // Request fullscreen on mobile devices when starting game
+            const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+            if (isTouchDevice) {
+                enterFullscreenIOS();
+            }
+            
             initGame();
             startLevel(1);
             lastTime = performance.now();
@@ -2583,17 +2625,9 @@ let finalBossDefeated = false;
             
             const gameContainer = document.getElementById('gameContainer');
             
-            // Request fullscreen function
+            // Request fullscreen function - uses iOS helper for better compatibility
             function requestFullscreen() {
-                if (gameContainer.requestFullscreen) {
-                    gameContainer.requestFullscreen().catch(err => {
-                        console.log('Fullscreen request failed:', err);
-                    });
-                } else if (gameContainer.webkitRequestFullscreen) {
-                    gameContainer.webkitRequestFullscreen();
-                } else if (gameContainer.msRequestFullscreen) {
-                    gameContainer.msRequestFullscreen();
-                }
+                enterFullscreenIOS();
             }
             
             // Exit fullscreen function
@@ -2646,6 +2680,56 @@ let finalBossDefeated = false;
 
         // Initialize fullscreen handling
         document.addEventListener('DOMContentLoaded', setupFullscreen);
+
+        // iOS-specific fullscreen helper
+        function enterFullscreenIOS() {
+            const gameContainer = document.getElementById('gameContainer');
+            const canvas = document.getElementById('gameCanvas');
+            
+            // Try standard fullscreen first
+            if (gameContainer.requestFullscreen) {
+                gameContainer.requestFullscreen().catch(() => {
+                    // Fallback for iOS - use webkitRequestFullscreen
+                    if (gameContainer.webkitRequestFullscreen) {
+                        gameContainer.webkitRequestFullscreen();
+                    } else if (canvas.webkitRequestFullscreen) {
+                        canvas.webkitRequestFullscreen();
+                    }
+                });
+            } else if (gameContainer.webkitRequestFullscreen) {
+                gameContainer.webkitRequestFullscreen();
+            } else if (canvas.webkitRequestFullscreen) {
+                canvas.webkitRequestFullscreen();
+            }
+        }
+
+        // Exit fullscreen button handler
+        document.getElementById('exitFullscreenBtn').addEventListener('click', () => {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        });
+
+        // Show/hide exit button based on fullscreen state
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('exitFullscreenBtn');
+            if (document.fullscreenElement) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
+
+        document.addEventListener('webkitfullscreenchange', () => {
+            const btn = document.getElementById('exitFullscreenBtn');
+            if (document.webkitFullscreenElement) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
     </script>
 </body>
 </html>
