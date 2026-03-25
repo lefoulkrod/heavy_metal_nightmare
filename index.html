@@ -302,7 +302,7 @@
             transition: width 0.3s;
         }
 
-        /* Touch Controls - Hidden by default on desktop */
+        /* Touch Controls - Only show on touch devices */
         #touchControls {
             position: absolute;
             bottom: 0;
@@ -313,8 +313,23 @@
             display: none;
         }
 
-        #touchControls.active {
-            display: block;
+        /* Only show touch controls on devices with coarse pointer (touchscreens) */
+        @media (pointer: coarse) {
+            #touchControls {
+                display: block;
+            }
+            
+            /* Hide keyboard controls hint on touch devices */
+            .desktop-controls {
+                display: none !important;
+            }
+        }
+
+        /* Hide touch controls on desktop (fine pointer devices like mouse) */
+        @media (pointer: fine) {
+            #touchControls {
+                display: none !important;
+            }
         }
 
         /* D-Pad on left */
@@ -416,27 +431,78 @@
             background: rgba(139, 0, 0, 0.9);
         }
 
-        /* Show touch controls on touch devices */
-        @media (pointer: coarse) {
-            #touchControls {
-                display: block;
+        /* Desktop controls hint */
+        .desktop-controls {
+            margin-top: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: 1px solid #8b0000;
+        }
+
+        /* Responsive canvas sizing */
+        @media (max-width: 1100px) {
+            #gameContainer {
+                width: 95vw;
+                height: 57vw;
+                max-height: 95vh;
             }
         }
 
-        /* Responsive canvas */
-        @media (max-width: 1020px) {
+        @media (max-width: 600px) {
             #gameContainer {
                 width: 100vw;
                 height: 60vw;
-                max-height: 100vh;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
             }
-            canvas {
-                width: 100%;
-                height: 100%;
+            
+            h1 {
+                font-size: 48px !important;
+            }
+            
+            h2 {
+                font-size: 36px !important;
+            }
+            
+            .btn {
+                font-size: 22px;
+                padding: 12px 35px;
+            }
+            
+            /* Smaller touch controls on small phones */
+            .dpad {
+                width: 120px;
+                height: 120px;
+                bottom: 10px;
+                left: 10px;
+            }
+            
+            .dpad-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .dpad-up { top: 0; left: 40px; }
+            .dpad-down { bottom: 0; left: 40px; }
+            .dpad-left { top: 40px; left: 0; }
+            .dpad-right { top: 40px; right: 0; }
+            
+            .action-btn.attack {
+                width: 80px;
+                height: 80px;
+                font-size: 14px;
+            }
+            
+            .action-buttons {
+                bottom: 10px;
+                right: 10px;
             }
         }
 
-        /* Orientation handling */
+        /* Orientation handling - only for mobile */
         #rotatePrompt {
             position: fixed;
             top: 0;
@@ -444,12 +510,19 @@
             width: 100%;
             height: 100%;
             background: #000;
-            display: flex;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             font-family: 'Metal Mania', cursive;
+        }
+
+        /* Only show rotate prompt on touch devices in portrait */
+        @media (pointer: coarse) and (orientation: portrait) {
+            #rotatePrompt {
+                display: flex;
+            }
         }
 
         #rotatePrompt .rotate-icon {
@@ -467,13 +540,8 @@
             font-size: 24px;
             color: #ff0000;
             text-shadow: 0 0 20px #8b0000;
-        }
-
-        /* Hide rotate prompt in landscape */
-        @media (orientation: landscape) {
-            #rotatePrompt {
-                display: none !important;
-            }
+            text-align: center;
+            padding: 0 20px;
         }
 
         /* Fullscreen styles */
@@ -498,14 +566,9 @@
             border-radius: 0;
         }
 
-        /* In fullscreen, make canvas fill the screen */
-        #gameContainer:fullscreen canvas {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain;
-        }
-
-        #gameContainer:-webkit-full-screen canvas {
+        #gameContainer:fullscreen canvas,
+        #gameContainer:-webkit-full-screen canvas,
+        #gameContainer:-moz-full-screen canvas {
             width: 100% !important;
             height: 100% !important;
             object-fit: contain;
@@ -539,10 +602,14 @@
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
                     <p class="click-prompt">Click to Start</p>
                     <button class="btn" id="startBtn">ENTER THE ABYSS</button>
-                    <div class="controls">
+                    <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
                         <span>P</span> to Pause
+                    </div>
+                    <div class="controls mobile-controls" style="display: none;">
+                        <span>Use D-Pad</span> to Move | 
+                        <span>ATTACK Button</span> to Shred
                     </div>
                 </div>
             </div>
@@ -2423,6 +2490,24 @@ let finalBossDefeated = false;
         // Start loading assets when page loads
         window.addEventListener('load', loadAssets);
 
+        // Setup device-specific UI on load
+        window.addEventListener('load', setupDeviceSpecificUI);
+
+        // Show appropriate controls based on device
+        function setupDeviceSpecificUI() {
+            const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+            const desktopControls = document.querySelector('.desktop-controls');
+            const mobileControls = document.querySelector('.mobile-controls');
+            
+            if (isTouchDevice) {
+                if (desktopControls) desktopControls.style.display = 'none';
+                if (mobileControls) mobileControls.style.display = 'block';
+            } else {
+                if (desktopControls) desktopControls.style.display = 'block';
+                if (mobileControls) mobileControls.style.display = 'none';
+            }
+        }
+
         // Touch Controls Setup
         function setupTouchControls() {
             const touchControls = document.getElementById('touchControls');
@@ -2486,8 +2571,16 @@ let finalBossDefeated = false;
         // Initialize touch controls
         document.addEventListener('DOMContentLoaded', setupTouchControls);
 
-        // Fullscreen and Orientation Handling
+        // Fullscreen and Orientation Handling - Mobile Only
         function setupFullscreen() {
+            // Only enable auto-fullscreen on mobile/touch devices
+            const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+            
+            if (!isTouchDevice) {
+                // Desktop: don't auto fullscreen, just return
+                return;
+            }
+            
             const gameContainer = document.getElementById('gameContainer');
             
             // Request fullscreen function
@@ -2516,11 +2609,8 @@ let finalBossDefeated = false;
                 }
             }
             
-            // Check if we're on a mobile device
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isMobile && window.screen.orientation) {
-                // Handle orientation changes
+            // Handle orientation changes
+            if (window.screen.orientation) {
                 window.screen.orientation.addEventListener('change', (e) => {
                     const orientation = window.screen.orientation.type;
                     
@@ -2534,18 +2624,17 @@ let finalBossDefeated = false;
                 
                 // Check initial orientation
                 if (window.screen.orientation.type.includes('landscape')) {
-                    // Small delay to let page settle
                     setTimeout(requestFullscreen, 500);
                 }
             }
             
-            // Alternative: use resize event for browsers without orientation API
+            // Fallback: use resize event for browsers without orientation API
             let wasLandscape = window.innerWidth > window.innerHeight;
             
             window.addEventListener('resize', () => {
                 const isLandscape = window.innerWidth > window.innerHeight;
                 
-                if (isLandscape && !wasLandscape && isMobile) {
+                if (isLandscape && !wasLandscape) {
                     requestFullscreen();
                 } else if (!isLandscape && wasLandscape) {
                     exitFullscreen();
