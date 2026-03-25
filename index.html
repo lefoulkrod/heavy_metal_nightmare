@@ -926,6 +926,12 @@
         #refreshBtn {
             display: flex;
         }
+
+        @media (max-width: 768px), (pointer: coarse) {
+            #titleRefreshBtn {
+                display: inline-block !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -986,6 +992,7 @@
                         border-radius: 5px;
                         color: #888;
                         cursor: pointer;
+                        display: none;
                     ">🔄 Refresh</button>
                     <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 

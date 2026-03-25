@@ -55,7 +55,7 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
     # Idle
     rig.reset()
     rig.root_position = original_root_pos
-    rig.apply_pose_safe(get_idle_pose())
+    rig.apply_pose_with_visibility(get_idle_pose())
     rig.center_in_canvas()
     rig.save(f"{output_dir}/player_idle.png")
     sprites.append("player_idle.png")
@@ -65,7 +65,7 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
     for i, pose_func in enumerate([get_walk_pose_1, get_walk_pose_2], 1):
         rig.reset()
         rig.root_position = original_root_pos
-        rig.apply_pose_safe(pose_func())
+        rig.apply_pose_with_visibility(pose_func())
         rig.center_in_canvas()
         filename = f"player_walk{i}.png"
         rig.save(f"{output_dir}/{filename}")
@@ -75,7 +75,7 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
     # Attack 1 - Wind-up
     rig.reset()
     rig.root_position = original_root_pos
-    rig.apply_pose_safe(get_attack_windup_pose())
+    rig.apply_pose_with_visibility(get_attack_windup_pose())
     rig.center_in_canvas()
     rig.save(f"{output_dir}/player_attack1.png")
     sprites.append("player_attack1.png")
@@ -84,7 +84,7 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
     # Attack 2 - Strike
     rig.reset()
     rig.root_position = original_root_pos
-    rig.apply_pose_safe(get_attack_strike_pose())
+    rig.apply_pose_with_visibility(get_attack_strike_pose())
     rig.center_in_canvas()
     rig.save(f"{output_dir}/player_attack2.png")
     sprites.append("player_attack2.png")
@@ -93,7 +93,7 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
     # Legacy attack (for compatibility)
     rig.reset()
     rig.root_position = original_root_pos
-    rig.apply_pose_safe(get_attack_strike_pose())
+    rig.apply_pose_with_visibility(get_attack_strike_pose())
     rig.center_in_canvas()
     rig.save(f"{output_dir}/player_attack.png")
     sprites.append("player_attack.png")
@@ -107,11 +107,22 @@ def generate_all_sprites(output_dir: str = "sprites_metal_warrior", use_optimize
         get_attack_windup_pose(),
         get_attack_strike_pose()
     ]
-    rig.export_sprite_sheet(
-        all_poses,
-        columns=5,
-        output_file=f"{output_dir}/spritesheet.png"
-    )
+    
+    # Create sprite sheet manually since export_sprite_sheet expects dicts
+    from PIL import Image as PILImage
+    sheet_width = rig.canvas_width * 5
+    sheet_height = rig.canvas_height
+    sheet = PILImage.new('RGBA', (sheet_width, sheet_height), (0, 0, 0, 0))
+    
+    for i, pose in enumerate(all_poses):
+        rig.reset()
+        rig.root_position = original_root_pos
+        rig.apply_pose_with_visibility(pose)
+        sprite = rig.render()
+        x = i * rig.canvas_width
+        sheet.paste(sprite, (x, 0))
+    
+    sheet.save(f"{output_dir}/spritesheet.png")
     print(f"✓ Generated: spritesheet.png")
     
     print(f"\nComplete! {len(sprites)+1} files in: {output_dir}")
@@ -133,7 +144,7 @@ def generate_single_pose(pose_name: str, output_dir: str = "sprites_metal_warrio
     rig.root_position = (base_rig.root_x, base_rig.root_y)
     
     rig.reset()
-    rig.apply_pose_safe(get_pose(pose_name))
+    rig.apply_pose_with_visibility(get_pose(pose_name))
     rig.center_in_canvas()
     
     output_file = f"{output_dir}/test_{pose_name}.png"

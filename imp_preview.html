@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imp Sprite Preview - Heavy Metal Nightmare</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Metal+Mania&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 50%, #0d0d0d 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            font-family: 'Metal Mania', cursive;
+            color: #8b0000;
+        }
+
+        h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 4rem;
+            color: #ff0000;
+            text-shadow: 
+                0 0 10px #8b0000,
+                0 0 20px #8b0000,
+                0 0 40px #8b0000,
+                4px 4px 8px #000;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+            animation: bloodDrip 3s ease-in-out infinite;
+        }
+
+        @keyframes bloodDrip {
+            0%, 100% { text-shadow: 0 0 10px #8b0000, 0 0 20px #8b0000, 0 0 40px #8b0000, 4px 4px 8px #000; }
+            50% { text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000, 0 0 60px #8b0000, 4px 8px 8px #000; }
+        }
+
+        .subtitle {
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .sprites-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1400px;
+        }
+
+        .sprite-card {
+            background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            min-width: 220px;
+        }
+
+        .sprite-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff0000, #8b0000, #ff0000);
+            border-radius: 8px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sprite-card:hover::before {
+            opacity: 0.5;
+        }
+
+        .sprite-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(139, 0, 0, 0.4);
+            border-color: #8b0000;
+        }
+
+        .sprite-frame {
+            background: radial-gradient(circle, #2a1515 0%, #1a0a0a 100%);
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sprite-frame::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(139, 0, 0, 0.03) 2px,
+                rgba(139, 0, 0, 0.03) 4px
+            );
+            pointer-events: none;
+        }
+
+        .sprite-frame img {
+            max-width: 150px;
+            max-height: 150px;
+            filter: drop-shadow(0 0 10px rgba(139, 0, 0, 0.5));
+            transition: transform 0.3s ease;
+        }
+
+        .sprite-card:hover .sprite-frame img {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6));
+        }
+
+        .sprite-label {
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.4rem;
+            color: #ccc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px #000;
+            position: relative;
+            display: inline-block;
+        }
+
+        .sprite-label::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b0000, transparent);
+        }
+
+        .sprite-file {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #444;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+
+        /* Chain decoration */
+        .chain-decoration {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 40px;
+            background: repeating-linear-gradient(
+                90deg,
+                #333 0px,
+                #333 10px,
+                #1a1a1a 10px,
+                #1a1a1a 20px
+            );
+            opacity: 0.3;
+        }
+
+        .chain-decoration.bottom {
+            top: auto;
+            bottom: 0;
+        }
+
+        /* Pentagram watermark */
+        .pentagram {
+            position: fixed;
+            font-size: 50vh;
+            color: rgba(139, 0, 0, 0.03);
+            pointer-events: none;
+            z-index: -1;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            .sprites-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chain-decoration"></div>
+    <div class="pentagram">⛧</div>
+    
+    <h1>Heavy Metal Nightmare</h1>
+    <div class="subtitle">Enemy Sprite Preview</div>
+    
+    <div class="sprites-container">
+        <div class="sprite-card">
+            <div class="sprite-frame">
+                <img src="sprites_imp/enemy_imp_idle.png" alt="Imp Idle">
+            </div>
+            <div class="sprite-label">Idle</div>
+            <div class="sprite-file">enemy_imp_idle.png</div>
+        </div>
+
+        <div class="sprite-card">
+            <div class="sprite-frame">
+                <img src="sprites_imp/enemy_imp_attack.png" alt="Imp Attack">
+            </div>
+            <div class="sprite-label">Attack</div>
+            <div class="sprite-file">enemy_imp_attack.png</div>
+        </div>
+
+        <div class="sprite-card">
+            <div class="sprite-frame">
+                <img src="sprites_imp/enemy_imp_fly1.png" alt="Imp Fly Up">
+            </div>
+            <div class="sprite-label">Fly Up</div>
+            <div class="sprite-file">enemy_imp_fly1.png</div>
+        </div>
+
+        <div class="sprite-card">
+            <div class="sprite-frame">
+                <img src="sprites_imp/enemy_imp_fly2.png" alt="Imp Fly Down">
+            </div>
+            <div class="sprite-label">Fly Down</div>
+            <div class="sprite-file">enemy_imp_fly2.png</div>
+        </div>
+    </div>
+
+    <div class="chain-decoration bottom"></div>
+</body>
+</html>
