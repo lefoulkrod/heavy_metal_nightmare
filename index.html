@@ -150,6 +150,18 @@
         
         .hidden {
             display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        /* Extra specificity for buttons to ensure complete hiding */
+        button.hidden,
+        .btn.hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute;
+            left: -9999px;
         }
         
         h1 {
@@ -987,8 +999,6 @@
                     <h1>⚡ HEAVY METAL NIGHTMARE ⚡</h1>
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
                     <p class="click-prompt" id="startPrompt">ENTER THE ABYSS</p>
-                    <!-- Hidden button for programmatic access -->
-                    <button class="btn hidden" id="startBtn">ENTER THE ABYSS</button>
                     <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
@@ -2832,7 +2842,8 @@ let finalBossDefeated = false;
             keys[e.key] = false;
         });
         
-        document.getElementById('startBtn').addEventListener('click', () => {
+        // Start game function
+        function startGame() {
             currentState = GameState.PLAYING;
             initAudio();
             document.getElementById('titleScreen').classList.add('hidden');
@@ -2851,15 +2862,17 @@ let finalBossDefeated = false;
             startLevel(1);
             lastTime = performance.now();
             gameLoopId = requestAnimationFrame(gameLoop);
-        });
+        }
 
-        // Click on prompt text
-        document.getElementById('startPrompt').addEventListener('click', () => {
-            document.getElementById('startBtn').click();
-        });
+        // Click on prompt text to start
+        document.getElementById('startPrompt').addEventListener('click', startGame);
+        
+        // Touch on prompt text
         document.getElementById('startPrompt').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            document.getElementById('startBtn').click();
+            if (currentState === GameState.TITLE) {
+                startGame();
+            }
         }, { passive: false });
         
         document.getElementById('resumeBtn').addEventListener('click', () => {
