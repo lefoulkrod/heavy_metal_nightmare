@@ -955,6 +955,27 @@
         #refreshBtn {
             display: flex;
         }
+        
+        #titleRefreshBtn {
+            position: static;
+            display: inline-block;
+            margin: 15px auto;
+            padding: 8px 20px;
+            background: rgba(139, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 100;
+            font-family: 'Metal Mania', cursive;
+            letter-spacing: 2px;
+        }
+        
+        #titleRefreshBtn:hover {
+            background: rgba(255, 0, 0, 0.9);
+            box-shadow: 0 0 15px #ff0000;
+        }
     </style>
 </head>
 <body>
@@ -993,6 +1014,9 @@
                     <h1>⚡ HEAVY METAL NIGHTMARE ⚡</h1>
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
                     <p class="click-prompt" id="startPrompt">ENTER THE ABYSS</p>
+                    <button id="titleRefreshBtn" title="Refresh for updates">🔄 Refresh</button>
+                    <!-- Invisible touch target for mobile -->
+                    <div id="mobileStartBtn" style="position: absolute; top: 40%; left: 10%; width: 80%; height: 15%; z-index: 200; cursor: pointer;"></div>
                     <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
@@ -2873,6 +2897,26 @@ let finalBossDefeated = false;
         startPrompt.addEventListener('click', handleStartClick);
         startPrompt.addEventListener('touchstart', handleStartClick, { passive: false });
         
+        // Mobile invisible touch target
+        const mobileStartBtn = document.getElementById('mobileStartBtn');
+        if (mobileStartBtn) {
+            mobileStartBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentState === GameState.TITLE) {
+                    startGame();
+                }
+            }, { passive: false });
+            
+            mobileStartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentState === GameState.TITLE) {
+                    startGame();
+                }
+            });
+        }
+        
         document.getElementById('resumeBtn').addEventListener('click', () => {
             currentState = GameState.PLAYING;
             document.getElementById('pauseScreen').classList.add('hidden');
@@ -3260,6 +3304,14 @@ let finalBossDefeated = false;
                 e.preventDefault();
                 window.location.reload(true);
             }, { passive: false });
+        }
+
+        // Title screen refresh button
+        const titleRefreshBtn = document.getElementById('titleRefreshBtn');
+        if (titleRefreshBtn) {
+            titleRefreshBtn.addEventListener('click', () => {
+                window.location.reload();
+            });
         }
 
         // Shake to refresh (for mobile)
