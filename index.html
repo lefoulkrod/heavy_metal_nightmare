@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
     <title>Heavy Metal Nightmare</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap');
@@ -604,9 +609,78 @@
         #gameContainer:-webkit-full-screen #exitFullscreenBtn {
             display: flex;
         }
+
+        /* iOS Safe Area support */
+        body {
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        /* Hide scrollbars but allow scrolling for address bar hide */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* iOS Add to Home Screen prompt */
+        #iosInstallPrompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #iosInstallPrompt.visible {
+            display: flex;
+        }
+
+        #iosInstallPrompt h2 {
+            font-size: 28px;
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+
+        #iosInstallPrompt p {
+            font-size: 18px;
+            color: #ccc;
+            margin: 10px 0;
+            max-width: 400px;
+        }
+
+        #iosInstallPrompt .ios-icon {
+            font-size: 60px;
+            margin: 20px 0;
+        }
+
+        #iosInstallPrompt .btn {
+            margin-top: 30px;
+        }
+
+        /* Hide install prompt on non-iOS or when installed */
+        @media not all and (hover: none) and (pointer: coarse) {
+            #iosInstallPrompt { display: none !important; }
+        }
     </style>
 </head>
 <body>
+    <!-- iOS Add to Home Screen Prompt -->
+    <div id="iosInstallPrompt">
+        <div class="ios-icon">📱➕🏠</div>
+        <h2>For True Fullscreen Metal!</h2>
+        <p>Tap the <strong>Share button</strong> below,</p>
+        <p>then <strong>"Add to Home Screen"</strong></p>
+        <p style="font-size: 14px; color: #888; margin-top: 20px;">This hides the browser for immersive gameplay</p>
+        <button class="btn" id="dismissIosPrompt">Continue Anyway</button>
+    </div>
     <!-- Rotate Device Prompt -->
     <div id="rotatePrompt">
         <div class="rotate-icon">📱</div>
@@ -2612,6 +2686,7 @@ let finalBossDefeated = false;
 
         // Initialize touch controls
         document.addEventListener('DOMContentLoaded', setupTouchControls);
+        document.addEventListener('DOMContentLoaded', setupIOSInstallPrompt);
 
         // Fullscreen and Orientation Handling - Mobile Only
         function setupFullscreen() {
@@ -2701,6 +2776,51 @@ let finalBossDefeated = false;
             } else if (canvas.webkitRequestFullscreen) {
                 canvas.webkitRequestFullscreen();
             }
+            
+            // iOS Safari: scroll to hide address bar
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }, 100);
+        }
+
+        // Scroll to hide address bar on iOS
+        function hideAddressBar() {
+            if (!window.location.hash) {
+                if (document.height < window.outerHeight) {
+                    document.body.style.height = (window.outerHeight + 50) + 'px';
+                }
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                }, 50);
+            }
+        }
+
+        // iOS Install Prompt handling
+        function setupIOSInstallPrompt() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.navigator.standalone === true;
+            const prompt = document.getElementById('iosInstallPrompt');
+            const dismissBtn = document.getElementById('dismissIosPrompt');
+            
+            // Show prompt on iOS if not already installed
+            if (isIOS && !isStandalone && prompt) {
+                prompt.classList.add('visible');
+            }
+            
+            // Dismiss button
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', () => {
+                    prompt.classList.remove('visible');
+                    // Try to hide address bar anyway
+                    hideAddressBar();
+                });
+            }
+            
+            // Auto-hide address bar on load
+            window.addEventListener('load', hideAddressBar);
+            window.addEventListener('orientationchange', hideAddressBar);
         }
 
         // Exit fullscreen button handler

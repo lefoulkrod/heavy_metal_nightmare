@@ -1,0 +1,17 @@
+{
+    "name": "Heavy Metal Nightmare",
+    "short_name": "Metal Nightmare",
+    "description": "Face the demons. Shred the darkness.",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#8b0000",
+    "orientation": "landscape",
+    "icons": [
+        {
+            "src": "title_screen.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
+}
