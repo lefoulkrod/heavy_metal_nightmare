@@ -435,9 +435,89 @@
                 height: 100%;
             }
         }
+
+        /* Orientation handling */
+        #rotatePrompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-family: 'Metal Mania', cursive;
+        }
+
+        #rotatePrompt .rotate-icon {
+            font-size: 80px;
+            animation: rotatePhone 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes rotatePhone {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        #rotatePrompt p {
+            font-size: 24px;
+            color: #ff0000;
+            text-shadow: 0 0 20px #8b0000;
+        }
+
+        /* Hide rotate prompt in landscape */
+        @media (orientation: landscape) {
+            #rotatePrompt {
+                display: none !important;
+            }
+        }
+
+        /* Fullscreen styles */
+        #gameContainer:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none;
+            border-radius: 0;
+        }
+
+        #gameContainer:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none;
+            border-radius: 0;
+        }
+
+        #gameContainer:-moz-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none;
+            border-radius: 0;
+        }
+
+        /* In fullscreen, make canvas fill the screen */
+        #gameContainer:fullscreen canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+
+        #gameContainer:-webkit-full-screen canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
+    <!-- Rotate Device Prompt -->
+    <div id="rotatePrompt">
+        <div class="rotate-icon">📱</div>
+        <p>Rotate to landscape for fullscreen metal!</p>
+    </div>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="1000" height="600"></canvas>
         
@@ -2405,6 +2485,78 @@ let finalBossDefeated = false;
 
         // Initialize touch controls
         document.addEventListener('DOMContentLoaded', setupTouchControls);
+
+        // Fullscreen and Orientation Handling
+        function setupFullscreen() {
+            const gameContainer = document.getElementById('gameContainer');
+            
+            // Request fullscreen function
+            function requestFullscreen() {
+                if (gameContainer.requestFullscreen) {
+                    gameContainer.requestFullscreen().catch(err => {
+                        console.log('Fullscreen request failed:', err);
+                    });
+                } else if (gameContainer.webkitRequestFullscreen) {
+                    gameContainer.webkitRequestFullscreen();
+                } else if (gameContainer.msRequestFullscreen) {
+                    gameContainer.msRequestFullscreen();
+                }
+            }
+            
+            // Exit fullscreen function
+            function exitFullscreen() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(err => {
+                        console.log('Exit fullscreen failed:', err);
+                    });
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
+            // Check if we're on a mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile && window.screen.orientation) {
+                // Handle orientation changes
+                window.screen.orientation.addEventListener('change', (e) => {
+                    const orientation = window.screen.orientation.type;
+                    
+                    // Enter fullscreen in landscape, exit in portrait
+                    if (orientation.includes('landscape')) {
+                        requestFullscreen();
+                    } else {
+                        exitFullscreen();
+                    }
+                });
+                
+                // Check initial orientation
+                if (window.screen.orientation.type.includes('landscape')) {
+                    // Small delay to let page settle
+                    setTimeout(requestFullscreen, 500);
+                }
+            }
+            
+            // Alternative: use resize event for browsers without orientation API
+            let wasLandscape = window.innerWidth > window.innerHeight;
+            
+            window.addEventListener('resize', () => {
+                const isLandscape = window.innerWidth > window.innerHeight;
+                
+                if (isLandscape && !wasLandscape && isMobile) {
+                    requestFullscreen();
+                } else if (!isLandscape && wasLandscape) {
+                    exitFullscreen();
+                }
+                
+                wasLandscape = isLandscape;
+            });
+        }
+
+        // Initialize fullscreen handling
+        document.addEventListener('DOMContentLoaded', setupFullscreen);
     </script>
 </body>
 </html>
