@@ -359,12 +359,17 @@
             letter-spacing: 6px;
             cursor: pointer;
             user-select: none;
+            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
             font-family: 'Metal Mania', cursive;
             font-weight: bold;
             transition: all 0.3s;
             display: inline-block;
             touch-action: manipulation;
+            pointer-events: auto;
+            position: relative;
+            z-index: 100;
+            padding: 10px 20px;
         }
 
         .click-prompt:hover,
@@ -946,18 +951,9 @@
             border-color: #ff0000;
         }
 
-        /* Only show refresh button in PWA/standalone mode */
-        @media all and (display-mode: standalone) {
-            #refreshBtn {
-                display: flex;
-            }
-        }
-
-        /* Hide on desktop browser */
-        @media not all and (display-mode: standalone) {
-            #refreshBtn {
-                display: none;
-            }
+        /* Show refresh button always */
+        #refreshBtn {
+            display: flex;
         }
     </style>
 </head>
@@ -2862,23 +2858,20 @@ let finalBossDefeated = false;
             gameLoopId = requestAnimationFrame(gameLoop);
         }
 
-        // Click on prompt text to start
-        document.getElementById('startPrompt').addEventListener('click', startGame);
-        
-        // Touch on prompt text - use touchend for better mobile response
+        // Click/tap on prompt text to start
         const startPrompt = document.getElementById('startPrompt');
-        startPrompt.addEventListener('touchend', (e) => {
+        
+        function handleStartClick(e) {
             e.preventDefault();
             e.stopPropagation();
             if (currentState === GameState.TITLE) {
                 startGame();
             }
-        }, { passive: false });
+            return false;
+        }
         
-        // Also handle touchstart to prevent default behaviors
-        startPrompt.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+        startPrompt.addEventListener('click', handleStartClick);
+        startPrompt.addEventListener('touchstart', handleStartClick, { passive: false });
         
         document.getElementById('resumeBtn').addEventListener('click', () => {
             currentState = GameState.PLAYING;
