@@ -373,7 +373,7 @@
             transition: width 0.3s;
         }
 
-        /* Touch Controls - Only show on touch devices */
+        /* Touch Controls - Hidden by default */
         #touchControls {
             position: absolute;
             bottom: 0;
@@ -382,12 +382,21 @@
             height: 100%;
             pointer-events: none;
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        /* Only show touch controls on devices with coarse pointer (touchscreens) */
+        /* Show touch controls when game is playing */
+        #touchControls.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Only show touch controls on touch devices when visible */
         @media (pointer: coarse) {
-            #touchControls {
+            #touchControls.visible {
                 display: block;
+                opacity: 1;
             }
             
             /* Hide keyboard controls hint on touch devices */
@@ -2584,6 +2593,7 @@ let finalBossDefeated = false;
             document.getElementById('finalLevel').textContent = currentLevel;
             document.getElementById('gameOverScreen').classList.remove('hidden');
             document.getElementById('hud').classList.add('hidden');
+            updateTouchControlsVisibility();
         }
         
         function victory() {
@@ -2599,6 +2609,7 @@ let finalBossDefeated = false;
             document.getElementById('demonsSlain').textContent = demonsKilled;
             document.getElementById('victoryScreen').classList.remove('hidden');
             document.getElementById('hud').classList.add('hidden');
+            updateTouchControlsVisibility();
         }
         
         function updateHUD() {
@@ -2722,6 +2733,7 @@ let finalBossDefeated = false;
         });
         
         document.getElementById('startBtn').addEventListener('click', () => {
+            currentState = GameState.PLAYING;
             initAudio();
             document.getElementById('titleScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
@@ -2732,6 +2744,9 @@ let finalBossDefeated = false;
                 enterFullscreenIOS();
             }
             
+            // Show touch controls now that game is playing
+            updateTouchControlsVisibility();
+            
             initGame();
             startLevel(1);
             lastTime = performance.now();
@@ -2741,19 +2756,24 @@ let finalBossDefeated = false;
         document.getElementById('resumeBtn').addEventListener('click', () => {
             currentState = GameState.PLAYING;
             document.getElementById('pauseScreen').classList.add('hidden');
+            updateTouchControlsVisibility();
             startMusic(currentLevel);
         });
         
         document.getElementById('restartBtn').addEventListener('click', () => {
+            currentState = GameState.PLAYING;
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
+            updateTouchControlsVisibility();
             initGame();
             startLevel(1);
         });
         
         document.getElementById('playAgainBtn').addEventListener('click', () => {
+            currentState = GameState.PLAYING;
             document.getElementById('victoryScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
+            updateTouchControlsVisibility();
             initGame();
             startLevel(1);
         });
@@ -2796,10 +2816,12 @@ let finalBossDefeated = false;
             if (currentState === GameState.PLAYING) {
                 currentState = GameState.PAUSED;
                 document.getElementById('pauseScreen').classList.remove('hidden');
+                updateTouchControlsVisibility();
                 stopMusic();
             } else if (currentState === GameState.PAUSED) {
                 currentState = GameState.PLAYING;
                 document.getElementById('pauseScreen').classList.add('hidden');
+                updateTouchControlsVisibility();
                 startMusic(currentLevel);
             }
         }
@@ -2808,10 +2830,10 @@ let finalBossDefeated = false;
         function setupTouchControls() {
             const touchControls = document.getElementById('touchControls');
             
-            // Show touch controls if touch device detected
-            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-                touchControls.classList.add('active');
-            }
+            // DON'T automatically show - we'll show/hide based on game state
+            // if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            //     touchControls.classList.add('active');
+            // }
             
             // Handle touch buttons
             const touchButtons = document.querySelectorAll('.dpad-btn, .action-btn, .power-btn');
@@ -2865,6 +2887,21 @@ let finalBossDefeated = false;
                 e.preventDefault();
             }
         }, { passive: false });
+
+        // Show/hide touch controls based on game state
+        function updateTouchControlsVisibility() {
+            const touchControls = document.getElementById('touchControls');
+            const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+            
+            if (!touchControls || !isTouchDevice) return;
+            
+            // Only show when game is playing
+            if (currentState === GameState.PLAYING) {
+                touchControls.classList.add('visible');
+            } else {
+                touchControls.classList.remove('visible');
+            }
+        }
 
         // Initialize touch controls
         document.addEventListener('DOMContentLoaded', setupTouchControls);
