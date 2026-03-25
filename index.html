@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Heavy Metal Nightmare</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap');
@@ -301,6 +301,140 @@
             background: linear-gradient(90deg, #ff0000, #8b0000);
             transition: width 0.3s;
         }
+
+        /* Touch Controls - Hidden by default on desktop */
+        #touchControls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+
+        #touchControls.active {
+            display: block;
+        }
+
+        /* D-Pad on left */
+        .dpad {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            pointer-events: auto;
+        }
+
+        .dpad-btn {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(139, 0, 0, 0.6);
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .dpad-btn:active {
+            background: rgba(255, 0, 0, 0.8);
+            transform: scale(0.95);
+        }
+
+        .dpad-up { top: 0; left: 50px; }
+        .dpad-down { bottom: 0; left: 50px; }
+        .dpad-left { top: 50px; left: 0; }
+        .dpad-right { top: 50px; right: 0; }
+
+        /* Action buttons on right */
+        .action-buttons {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            pointer-events: auto;
+        }
+
+        .action-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(139, 0, 0, 0.7);
+            border: 3px solid #ff0000;
+            color: #fff;
+            font-family: 'Metal Mania', cursive;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+        }
+
+        .action-btn:active {
+            background: rgba(255, 0, 0, 0.9);
+            transform: scale(0.95);
+        }
+
+        .action-btn.attack {
+            width: 100px;
+            height: 100px;
+            font-size: 18px;
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        /* Pause button */
+        .pause-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(74, 0, 128, 0.7);
+            border: 2px solid #8b00ff;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .pause-btn:active {
+            background: rgba(139, 0, 0, 0.9);
+        }
+
+        /* Show touch controls on touch devices */
+        @media (pointer: coarse) {
+            #touchControls {
+                display: block;
+            }
+        }
+
+        /* Responsive canvas */
+        @media (max-width: 1020px) {
+            #gameContainer {
+                width: 100vw;
+                height: 60vw;
+                max-height: 100vh;
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -377,6 +511,20 @@
                 <p class="stats">Final Score: <span id="victoryScore">0</span></p>
                 <p class="stats">Demons Slain: <span id="demonsSlain">0</span></p>
                 <button class="btn" id="playAgainBtn">SHRED AGAIN</button>
+            </div>
+            
+            <!-- Touch Controls -->
+            <div id="touchControls">
+                <div class="dpad">
+                    <div class="dpad-btn dpad-up" data-key="ArrowUp">▲</div>
+                    <div class="dpad-btn dpad-down" data-key="ArrowDown">▼</div>
+                    <div class="dpad-btn dpad-left" data-key="ArrowLeft">◀</div>
+                    <div class="dpad-btn dpad-right" data-key="ArrowRight">▶</div>
+                </div>
+                <div class="action-buttons">
+                    <div class="action-btn attack" data-key=" ">ATTACK</div>
+                </div>
+                <div class="pause-btn" data-key="p">⏸</div>
             </div>
         </div>
     </div>
@@ -2194,6 +2342,69 @@ let finalBossDefeated = false;
         
         // Start loading assets when page loads
         window.addEventListener('load', loadAssets);
+
+        // Touch Controls Setup
+        function setupTouchControls() {
+            const touchControls = document.getElementById('touchControls');
+            
+            // Show touch controls if touch device detected
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                touchControls.classList.add('active');
+            }
+            
+            // Handle touch buttons
+            const touchButtons = document.querySelectorAll('.dpad-btn, .action-btn, .pause-btn');
+            
+            touchButtons.forEach(btn => {
+                const key = btn.dataset.key;
+                
+                // Touch start - press key
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                    btn.style.transform = 'scale(0.95)';
+                }, { passive: false });
+                
+                // Touch end - release key
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                    btn.style.transform = '';
+                });
+                
+                // Mouse support for testing on desktop
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                });
+                
+                btn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+                
+                btn.addEventListener('mouseleave', (e) => {
+                    keys[key] = false;
+                });
+            });
+        }
+
+        // Prevent default touch behaviors that interfere with game
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#touchControls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Prevent zoom on double tap
+        document.addEventListener('touchend', (e) => {
+            if (e.target.closest('#touchControls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Initialize touch controls
+        document.addEventListener('DOMContentLoaded', setupTouchControls);
     </script>
 </body>
 </html>
