@@ -6,7 +6,7 @@ Heavy Metal Warrior - Female character with BC Rich Warlock guitar
 from PIL import Image, ImageDraw
 from typing import Tuple
 import sys
-sys.path.insert(0, '/home/computron/pil_rigging_system')
+sys.path.insert(0, '/home/computron/repos/pil_rigging_system')
 from core.part import Part
 
 
@@ -498,41 +498,75 @@ def create_metal_head(name: str = "head", size: int = 48) -> Part:
         
         face_size = size
         
-        # Long flowing vibrant red hair (shoulder/mid-back length)
+        # Long flowing vibrant red hair - BEHIND the head
         hair_color = METAL_COLORS['vibrant_red']
         hair_highlight = (230, 50, 50)  # Lighter red for highlights
         
-        # Main hair mass - flowing down
-        hair_points = [
-            (2, face_size//3),           # Left side
-            (face_size//4, 2),            # Top left
-            (face_size*3//4, 2),          # Top right
-            (face_size-2, face_size//3),  # Right side
-            (face_size-2, face_size + 25), # Bottom right
-            (face_size//2, face_size + 30), # Bottom center
-            (2, face_size + 25)            # Bottom left
+        # BACK HAIR - flows behind the head, not in front of face
+        # This is the hair that goes down the back
+        back_hair_points = [
+            (0, 10),                      # Top left (behind head)
+            (face_size//4, 2),            # Top center-left
+            (face_size*3//4, 2),          # Top center-right
+            (face_size, 10),               # Top right (behind head)
+            (face_size, face_size + 30),   # Bottom right - long flowing back
+            (face_size//2, face_size + 35), # Bottom center point
+            (0, face_size + 30)            # Bottom left - long flowing back
         ]
-        draw.polygon(hair_points, fill=hair_color, 
+        draw.polygon(back_hair_points, fill=hair_color, 
                     outline=(150, 0, 0), width=2)
         
-        # Hair strands/layers for flowing effect
-        for i in range(5):
-            x = face_size//4 + i * face_size//5
-            # Long flowing strands
-            draw.line([(x, 5), (x + 8, face_size + 25)], 
-                     fill=hair_highlight, width=3)
-            draw.line([(x + 3, 5), (x + 5, face_size + 20)], 
-                     fill=hair_color, width=2)
-        
-        # Bangs/fringe
-        bang_points = [
-            (face_size//4, 5),
-            (face_size*3//4, 5),
-            (face_size*3//4, face_size//3),
-            (face_size//2, face_size//3 + 5),
-            (face_size//4, face_size//3)
+        # Side hair strands - flowing to the sides, NOT in front of face
+        # Left side hair
+        left_side_hair = [
+            (0, 15),
+            (-5, face_size//2),
+            (0, face_size + 20)
         ]
-        draw.polygon(bang_points, fill=hair_color)
+        draw.polygon(left_side_hair, fill=hair_color, outline=(150, 0, 0), width=1)
+        
+        # Right side hair
+        right_side_hair = [
+            (face_size, 15),
+            (face_size + 5, face_size//2),
+            (face_size, face_size + 20)
+        ]
+        draw.polygon(right_side_hair, fill=hair_color, outline=(150, 0, 0), width=1)
+        
+        # Top hair volume - covers top of head
+        top_hair_points = [
+            (face_size//6, 0),
+            (face_size//2, -3),
+            (face_size*5//6, 0),
+            (face_size*5//6, 15),
+            (face_size//2, 12),
+            (face_size//6, 15)
+        ]
+        draw.polygon(top_hair_points, fill=hair_color, outline=(150, 0, 0), width=1)
+        
+        # Side-swept bangs - frame the face from above, NOT below
+        # Left bang - swept to the side
+        left_bang = [
+            (face_size//6, 5),
+            (face_size//3, 3),
+            (face_size//3, face_size//4),
+            (face_size//6 + 2, face_size//4 + 5)
+        ]
+        draw.polygon(left_bang, fill=hair_color)
+        
+        # Right bang - swept to the side
+        right_bang = [
+            (face_size*2//3, 3),
+            (face_size*5//6, 5),
+            (face_size*5//6 - 2, face_size//4 + 5),
+            (face_size*2//3, face_size//4)
+        ]
+        draw.polygon(right_bang, fill=hair_color)
+        
+        # Hair highlight strands on top
+        draw.line([(face_size//3, 2), (face_size//3 + 5, 15)], fill=hair_highlight, width=2)
+        draw.line([(face_size//2, 0), (face_size//2 + 3, 12)], fill=hair_highlight, width=2)
+        draw.line([(face_size*2//3, 2), (face_size*2//3 - 2, 15)], fill=hair_highlight, width=2)
         
         # Face (slightly smaller for female proportions)
         face_margin = 6
