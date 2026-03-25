@@ -18,11 +18,18 @@
             box-sizing: border-box;
         }
         
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             background: #0a0a0a;
             color: #fff;
             font-family: 'Metal Mania', cursive;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -59,6 +66,8 @@
         canvas {
             display: block;
             image-rendering: pixelated;
+            max-width: 100%;
+            max-height: 100vh;
         }
         
         #ui {
@@ -79,11 +88,12 @@
         }
         
         .screen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -91,8 +101,9 @@
             background: rgba(0, 0, 0, 0.85);
             pointer-events: auto;
             text-align: center;
-            min-width: 100%;
-            min-height: 100%;
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         /* Ensure screens fill viewport in PWA/standalone mode */
@@ -116,6 +127,25 @@
                 height: -webkit-fill-available;
                 height: 100dvh;
             }
+        }
+
+        /* Specific fix for game over and victory screens - full viewport coverage */
+        #gameOverScreen,
+        #victoryScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
         }
         
         .hidden {
@@ -144,6 +174,9 @@
             color: #8b0000;
             text-shadow: 0 0 20px #ff0000;
             margin-bottom: 30px;
+            max-width: 90vw;
+            text-align: center;
+            word-wrap: break-word;
         }
         
         .subtitle {
@@ -269,6 +302,9 @@
             font-size: 20px;
             color: #aaa;
             margin: 10px 0;
+            max-width: 90vw;
+            word-wrap: break-word;
+            text-align: center;
         }
         
         /* Title Screen Styles */
@@ -309,6 +345,23 @@
             margin: 20px 0;
             animation: pulse 1.5s ease-in-out infinite;
             letter-spacing: 4px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            padding: 15px 50px;
+            background: linear-gradient(180deg, #8b0000 0%, #4a0080 100%);
+            border: 3px solid #ff0000;
+            border-radius: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+            font-family: 'Metal Mania', cursive;
+        }
+
+        .click-prompt:hover,
+        .click-prompt:active {
+            background: linear-gradient(180deg, #ff0000 0%, #8b0000 100%);
+            box-shadow: 0 0 40px #ff0000;
+            transform: scale(1.05);
         }
         
         #titleScreen h1 {
@@ -346,14 +399,37 @@
             background: rgba(0, 0, 0, 0.9);
         }
 
-        /* Game Over Screen */
+        /* Game Over Screen - additional styles only */
         #gameOverScreen {
             background: rgba(0, 0, 0, 0.95);
         }
 
-        /* Victory Screen */
+        /* Victory Screen - additional styles only */
         #victoryScreen {
             background: rgba(0, 0, 0, 0.95);
+        }
+
+        /* Game Over and Victory screen responsive text */
+        #gameOverScreen h2,
+        #victoryScreen h1,
+        #victoryScreen h2 {
+            font-size: 48px;
+            max-width: 90vw;
+            word-wrap: break-word;
+            padding: 0 20px;
+        }
+
+        /* Ensure stats don't overflow on game screens */
+        #gameOverScreen .stats,
+        #victoryScreen .stats {
+            max-width: 90vw;
+            padding: 0 15px;
+        }
+
+        /* Restart button sizing */
+        #restartBtn {
+            max-width: 80vw;
+            white-space: nowrap;
         }
         
         .loading-bar {
@@ -591,6 +667,29 @@
             .action-buttons {
                 bottom: 10px;
                 right: 10px;
+            }
+            
+            /* Responsive text sizing for mobile */
+            h2 {
+                font-size: 32px !important;
+                margin-bottom: 20px;
+                padding: 0 10px;
+                max-width: 95vw;
+            }
+            
+            #gameOverScreen h2,
+            #victoryScreen h1,
+            #victoryScreen h2 {
+                font-size: 36px;
+                max-width: 95vw;
+                padding: 0 15px;
+            }
+            
+            #gameOverScreen .stats,
+            #victoryScreen .stats {
+                font-size: 18px;
+                max-width: 90vw;
+                padding: 0 15px;
             }
         }
 
@@ -887,8 +986,9 @@
                 <div class="title-content">
                     <h1>⚡ HEAVY METAL NIGHTMARE ⚡</h1>
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
-                    <p class="click-prompt">Click to Start</p>
-                    <button class="btn" id="startBtn">ENTER THE ABYSS</button>
+                    <p class="click-prompt" id="startPrompt">ENTER THE ABYSS</p>
+                    <!-- Hidden button for programmatic access -->
+                    <button class="btn hidden" id="startBtn">ENTER THE ABYSS</button>
                     <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
@@ -2752,6 +2852,15 @@ let finalBossDefeated = false;
             lastTime = performance.now();
             gameLoopId = requestAnimationFrame(gameLoop);
         });
+
+        // Click on prompt text
+        document.getElementById('startPrompt').addEventListener('click', () => {
+            document.getElementById('startBtn').click();
+        });
+        document.getElementById('startPrompt').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('startBtn').click();
+        }, { passive: false });
         
         document.getElementById('resumeBtn').addEventListener('click', () => {
             currentState = GameState.PLAYING;
