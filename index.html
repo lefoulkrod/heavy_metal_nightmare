@@ -365,10 +365,8 @@
             font-weight: bold;
             transition: all 0.3s;
             display: inline-block;
-            touch-action: manipulation;
-            pointer-events: auto;
             position: relative;
-            z-index: 100;
+            z-index: 150;
             padding: 10px 20px;
         }
 
@@ -956,25 +954,43 @@
             display: flex;
         }
         
+        /* Mobile-only invisible touch target */
+        #mobileStartBtn {
+            position: absolute;
+            top: 40%;
+            left: 10%;
+            width: 80%;
+            height: 15%;
+            z-index: 200;
+            cursor: pointer;
+            display: none;
+        }
+        
+        @media (max-width: 768px), (pointer: coarse) {
+            #mobileStartBtn {
+                display: block;
+            }
+        }
+        
         #titleRefreshBtn {
-            position: static;
-            display: inline-block;
-            margin: 15px auto;
-            padding: 8px 20px;
-            background: rgba(139, 0, 0, 0.8);
-            border: 2px solid #ff0000;
-            border-radius: 20px;
-            color: #fff;
-            font-size: 16px;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 5px 10px;
+            background: rgba(50, 50, 50, 0.6);
+            border: 1px solid #666;
+            border-radius: 5px;
+            color: #888;
+            font-size: 12px;
             cursor: pointer;
             z-index: 100;
-            font-family: 'Metal Mania', cursive;
-            letter-spacing: 2px;
+            font-family: sans-serif;
+            letter-spacing: 1px;
         }
         
         #titleRefreshBtn:hover {
-            background: rgba(255, 0, 0, 0.9);
-            box-shadow: 0 0 15px #ff0000;
+            background: rgba(80, 80, 80, 0.8);
+            color: #aaa;
         }
     </style>
 </head>
@@ -1015,8 +1031,8 @@
                     <p class="subtitle">Face the demons. Shred the darkness.</p>
                     <p class="click-prompt" id="startPrompt">ENTER THE ABYSS</p>
                     <button id="titleRefreshBtn" title="Refresh for updates">🔄 Refresh</button>
-                    <!-- Invisible touch target for mobile -->
-                    <div id="mobileStartBtn" style="position: absolute; top: 40%; left: 10%; width: 80%; height: 15%; z-index: 200; cursor: pointer;"></div>
+                    <!-- Invisible touch target for mobile only -->
+                    <div id="mobileStartBtn"></div>
                     <div class="controls desktop-controls">
                         <span>WASD / ARROWS</span> to Move | 
                         <span>SPACE</span> to Attack |
