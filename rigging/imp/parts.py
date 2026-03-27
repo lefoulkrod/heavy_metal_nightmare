@@ -386,21 +386,18 @@ def create_imp_leg(name: str = "leg", length: int = 16, width: int = 6) -> Part:
     return part
 
 
-def create_imp_tail(name: str = "tail", width: int = 24, height: int = 40) -> Part:
-    """Create a thin, whip-like devil tail with black spade tip.
+def create_imp_tail(name: str = "tail", width: int = 30, height: int = 36) -> Part:
+    """Create a whip-like devil tail with constant width and black spade tip.
     
-    Classic cartoon devil tail - thin like a rat tail or whip, curves 
-    outward and upward with a small black arrow/spade tip.
-    Renders BEHIND the body using z_index=-1.
-    The tail has a pronounced S-curve to extend visibly from the body.
+    Thin tail (2-3px) with a smooth S-curve, same width throughout.
+    Black spade tip at the end. Renders BEHIND the body using z_index=-1.
     """
     part = Part(
         name=name,
         width=width,
         height=height,
-        pivot_x=0.2,    # Pivot near left edge (tail attachment)
-        pivot_y=0.85,   # Near bottom where it attaches to body
-        color=IMP_COLORS['body_red'],
+        pivot_x=0.15,   # Pivot near left edge (tail attachment)
+        pivot_y=0.9,    # Near bottom where it attaches to body
         z_index=-1      # Renders BEHIND body
     )
     
@@ -411,75 +408,49 @@ def create_imp_tail(name: str = "tail", width: int = 24, height: int = 40) -> Pa
         # Colors
         tail_red = IMP_COLORS['body_red']      # (200, 40, 40)
         tail_dark = IMP_COLORS['body_dark']    # Darker red
-        highlight = (230, 80, 80)              # Lighter red for shine
         
-        # Attachment point (bottom left area)
-        base_x = 4
-        base_y = height - 3
+        # S-curve points - constant width tail
+        # Starting from attachment point (bottom left)
+        # Curve: starts down/right, curves up, then curls back
+        tail_thickness = 2  # CONSTANT width throughout!
         
-        # Pronounced S-curve that extends well beyond the body
-        # Starts going down and right, then curves up and right
-        # This ensures visibility even when rendered behind
-        tail_segments = [
-            (base_x + 0, base_y - 2, 4),       # Base - 4px wide attachment
-            (base_x + 2, base_y - 4, 4),       # Starting out
-            (base_x + 5, base_y - 6, 3),       # Extending right
-            (base_x + 8, base_y - 8, 3),       # Further out
-            (base_x + 11, base_y - 10, 3),     # Now at outer edge
-            (base_x + 13, base_y - 14, 3),     # Curving up
-            (base_x + 14, base_y - 18, 3),     # Up and right
-            (base_x + 15, base_y - 22, 2),     # Continuing
-            (base_x + 16, base_y - 26, 2),     # Near tip
-            (base_x + 16, base_y - 30, 2),     # Thinner
-            (base_x + 15, base_y - 34, 1),     # Very thin
+        # S-curve path points (x, y)
+        curve_points = [
+            (3, 33),    # Attachment to body
+            (5, 30),
+            (8, 26),
+            (12, 22),   # Middle of first curve
+            (16, 20),
+            (20, 19),
+            (22, 21),   # Start of S curve back
+            (21, 25),
+            (18, 28),   # Tip position
         ]
         
-        # Draw the thin tail as a smooth series of small ellipses
-        for i, (x, y, w) in enumerate(tail_segments):
-            # Small height for thin appearance
-            h = 3 if w > 2 else 2
-            draw.ellipse(
-                [x - w//2, y - h//2, x + w//2 + (w % 2), y + h//2],
-                fill=tail_red,
-                outline=tail_dark,
-                width=1
-            )
+        # Draw the tail as a smooth line with constant thickness
+        for i in range(len(curve_points) - 1):
+            x1, y1 = curve_points[i]
+            x2, y2 = curve_points[i + 1]
+            draw.line([(x1, y1), (x2, y2)], fill=tail_red, width=tail_thickness)
+            # Dark outline
+            draw.line([(x1, y1), (x2, y2)], fill=tail_dark, width=1)
         
-        # Fill gaps between segments with smooth connections
-        for i in range(len(tail_segments) - 1):
-            x1, y1, w1 = tail_segments[i]
-            x2, y2, w2 = tail_segments[i + 1]
-            
-            # Small connecting polygon to smooth the curve
-            points = [
-                (x1 - w1//2 + 1, y1),
-                (x1 + w1//2 - 1, y1),
-                (x2 + w2//2 - 1, y2),
-                (x2 - w2//2 + 1, y2),
-            ]
-            draw.polygon(points, fill=tail_red)
+        # Fill in the line to make it solid (circles at each point)
+        for x, y in curve_points:
+            draw.ellipse([x-1, y-1, x+1, y+1], fill=tail_red, outline=tail_dark, width=1)
         
-        # Subtle highlight along the top curve
-        for i in range(len(tail_segments) - 1):
-            x1, y1, w1 = tail_segments[i]
-            x2, y2, w2 = tail_segments[i + 1]
-            draw.line([(x1 - 1, y1 - 1), (x2 - 1, y2 - 1)], 
-                     fill=highlight, width=1)
+        # BLACK SPADE TIP at the end
+        tip_x, tip_y = curve_points[-1]
         
-        # SMALL BLACK SPADE/ARROW TIP at the end
-        end_seg = tail_segments[-1]
-        tip_x = end_seg[0]
-        tip_y = end_seg[1] - 2
-        
-        # Small arrow/spade shape (3px wide, 4px tall)
+        # Small spade/arrow shape pointing up and left
         spade_points = [
-            (tip_x - 1, tip_y + 1),      # Left base
-            (tip_x, tip_y - 3),          # Sharp top point
-            (tip_x + 1, tip_y + 1),      # Right base
-            (tip_x, tip_y + 2),          # Bottom point
+            (tip_x - 2, tip_y + 1),      # Left base
+            (tip_x, tip_y - 4),          # Sharp top point  
+            (tip_x + 2, tip_y + 1),      # Right base
+            (tip_x, tip_y + 2),          # Bottom indent
         ]
         
-        draw.polygon(spade_points, fill=IMP_COLORS['tail_tip'])
+        draw.polygon(spade_points, fill=IMP_COLORS['tail_tip'], outline=(10, 10, 10))
         
         return img
     
