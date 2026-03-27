@@ -1161,44 +1161,44 @@
         
         async function loadAssets() {
             // Load player sprites
-            sprites.player_idle = await loadImage('player_idle.png');
-            sprites.player_attack_windup = await loadImage('player_attack_windup.png');
-            sprites.player_attack_strike = await loadImage('player_attack_strike.png');
-            sprites.player_walk1 = await loadImage('player_walk1.png');
-            sprites.player_walk2 = await loadImage('player_walk2.png');
+            sprites.player_idle = await loadImage('sprites/player/player_idle.png');
+            sprites.player_attack_windup = await loadImage('sprites/player/player_attack_windup.png');
+            sprites.player_attack_strike = await loadImage('sprites/player/player_attack_strike.png');
+            sprites.player_walk1 = await loadImage('sprites/player/player_walk1.png');
+            sprites.player_walk2 = await loadImage('sprites/player/player_walk2.png');
             
             // Load Skeleton enemy sprites
-            sprites.enemy_skeleton_idle = await loadImage('enemy_skeleton_idle.png');
-            sprites.enemy_skeleton_walk1 = await loadImage('enemy_skeleton_walk1.png');
-            sprites.enemy_skeleton_walk2 = await loadImage('enemy_skeleton_walk2.png');
-            sprites.enemy_skeleton_attack = await loadImage('enemy_skeleton_attack.png');
+            sprites.enemy_skeleton_idle = await loadImage('sprites/skeleton/skeleton_idle.png');
+            sprites.enemy_skeleton_walk1 = await loadImage('sprites/skeleton/skeleton_walk1.png');
+            sprites.enemy_skeleton_walk2 = await loadImage('sprites/skeleton/skeleton_walk2.png');
+            sprites.enemy_skeleton_attack = await loadImage('sprites/skeleton/skeleton_attack.png');
             
             // Load Imp enemy sprites
-            sprites.enemy_imp_idle = await loadImage('enemy_imp_idle.png');
-            sprites.enemy_imp_fly1 = await loadImage('enemy_imp_fly1.png');
-            sprites.enemy_imp_fly2 = await loadImage('enemy_imp_fly2.png');
-            sprites.enemy_imp_attack = await loadImage('enemy_imp_attack.png');
+            sprites.enemy_imp_idle = await loadImage('sprites/imp/imp_idle.png');
+            sprites.enemy_imp_fly1 = await loadImage('sprites/imp/imp_float1.png');
+            sprites.enemy_imp_fly2 = await loadImage('sprites/imp/imp_float2.png');
+            sprites.enemy_imp_attack = await loadImage('sprites/imp/imp_attack.png');
             
             // Load Hell Knight enemy sprites
-            sprites.enemy_hellknight_idle = await loadImage('enemy_hellknight_idle.png');
-            sprites.enemy_hellknight_walk1 = await loadImage('enemy_hellknight_walk1.png');
-            sprites.enemy_hellknight_walk2 = await loadImage('enemy_hellknight_walk2.png');
-            sprites.enemy_hellknight_attack = await loadImage('enemy_hellknight_attack.png');
+            sprites.enemy_hellknight_idle = await loadImage('sprites/hellknight/hellknight_idle.png');
+            sprites.enemy_hellknight_walk1 = await loadImage('sprites/hellknight/hellknight_walk1.png');
+            sprites.enemy_hellknight_walk2 = await loadImage('sprites/hellknight/hellknight_walk2.png');
+            sprites.enemy_hellknight_attack = await loadImage('sprites/hellknight/hellknight_attack.png');
             
             // Load Shadow Lord enemy sprites
-            sprites.enemy_shadowlord_idle = await loadImage('enemy_shadowlord_idle.png');
-            sprites.enemy_shadowlord_float1 = await loadImage('enemy_shadowlord_float1.png');
-            sprites.enemy_shadowlord_float2 = await loadImage('enemy_shadowlord_float2.png');
-            sprites.enemy_shadowlord_attack = await loadImage('enemy_shadowlord_attack.png');
-            sprites.enemy_overlord_idle = await loadImage('enemy_overlord_idle.png');
-            sprites.enemy_overlord_float1 = await loadImage('enemy_overlord_float1.png');
-            sprites.enemy_overlord_float2 = await loadImage('enemy_overlord_float2.png');
-            sprites.enemy_overlord_attack = await loadImage('enemy_overlord_attack.png');
+            sprites.enemy_shadowlord_idle = await loadImage('sprites/shadowlord/shadowlord_idle.png');
+            sprites.enemy_shadowlord_float1 = await loadImage('sprites/shadowlord/shadowlord_float1.png');
+            sprites.enemy_shadowlord_float2 = await loadImage('sprites/shadowlord/shadowlord_float2.png');
+            sprites.enemy_shadowlord_attack = await loadImage('sprites/shadowlord/shadowlord_attack.png');
+            sprites.enemy_overlord_idle = await loadImage('sprites/overlord/overlord_idle.png');
+            sprites.enemy_overlord_float1 = await loadImage('sprites/overlord/overlord_float1.png');
+            sprites.enemy_overlord_float2 = await loadImage('sprites/overlord/overlord_float2.png');
+            sprites.enemy_overlord_attack = await loadImage('sprites/overlord/overlord_attack.png');
             
             // Load background images
-            sprites.bg_level1_cemetery = await loadImage('bg_level1_cemetery.jpg');
-            sprites.bg_level2_forge = await loadImage('bg_level2_forge.jpg');
-            sprites.bg_level3_abyss = await loadImage('bg_level3_abyss.jpg');
+            sprites.bg_level1_cemetery = await loadImage('sprites/backgrounds/bg_level1_cemetery.jpg');
+            sprites.bg_level2_forge = await loadImage('sprites/backgrounds/bg_level2_forge.jpg');
+            sprites.bg_level3_abyss = await loadImage('sprites/backgrounds/bg_level3_abyss.jpg');
             
             // Wait for title screen image to load (if not already loaded)
             const titleBg = document.getElementById('titleBg');

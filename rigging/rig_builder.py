@@ -3,11 +3,12 @@ Rig builder for the Metal Warrior character.
 """
 
 import sys
-sys.path.insert(0, '/home/computron/pil_rigging_system')
+sys.path.insert(0, '/home/computron/repos/pil_rigging_system')
 from core.rig import Rig
 from rigging.parts import (
     create_metal_torso,
     create_metal_head,
+    create_metal_back_hair,
     create_spiked_arm,
     create_armored_leg,
     create_guitar,
@@ -19,10 +20,25 @@ def create_metal_warrior_rig() -> Rig:
     
     torso = create_metal_torso("torso")
     
+    # Create back hair first (renders behind torso)
+    back_hair = create_metal_back_hair("back_hair")
+    
     head = create_metal_head("head")
     neck = torso.find_joint("neck")
     if neck:
         neck.child = head
+    
+    # Attach hair to torso at neck position
+    # Hair has pivot at bottom, so it extends UP behind the head
+    if neck:
+        torso.add_joint(
+            "hair_sync",
+            x=0.5,  # Same X as neck (center of torso)
+            y=0.0,  # At the neck/top of torso - hair pivot (bottom) attaches here
+            child=back_hair,
+            sync_to=neck,  # Sync to neck joint so hair follows head rotation
+            angle_offset=0
+        )
     
     left_arm = create_spiked_arm("left_arm", length=60)
     right_arm = create_spiked_arm("right_arm", length=60)
@@ -79,6 +95,8 @@ def create_metal_warrior_rig() -> Rig:
     )
     
     # Attach guitar_attack to left wrist (for attack poses)
+    # Attack guitar is hidden by default - only shown during attack poses
+    guitar_attack.visible = False  # Hide by default, show only for attack poses
     left_wrist = left_arm.find_joint("wrist_left")
     if left_wrist:
         left_wrist.child = guitar_attack

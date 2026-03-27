@@ -36,7 +36,7 @@ def generate_imp_sprites(output_dir: str = None):
     if output_dir is None:
         output_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "sprites_imp"
+            "sprites/imp"
         )
     
     # Create output directory if it doesn't exist

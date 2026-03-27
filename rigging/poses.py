@@ -35,6 +35,7 @@ def get_idle_pose():
             "hip_left": 0,
             "hip_right": 0,
             "neck": 0,
+            "hair_attach": 0,          # Hair rotates with head to stay attached
             "guitar_mount": -90,       # HORIZONTAL playing position (guitar across torso)
         },
         hidden_parts=["guitar_attack"]
@@ -59,6 +60,7 @@ def get_walk_pose_1():
             "hip_left": -20,
             "hip_right": 20,
             "neck": 3,
+            "hair_attach": 0,          # Hair rotates with head to stay attached
             "guitar_mount": -90,       # HORIZONTAL playing position
         },
         hidden_parts=["guitar_attack"]
@@ -83,6 +85,7 @@ def get_walk_pose_2():
             "hip_left": 20,
             "hip_right": -20,
             "neck": -3,
+            "hair_attach": 0,           # Hair rotates with head to stay attached
             "guitar_mount": -90,       # HORIZONTAL playing position
         },
         hidden_parts=["guitar_attack"]
@@ -110,6 +113,7 @@ def get_attack_windup_pose():
             "hip_left": -15,
             "hip_right": 15,
             "neck": -20,
+            "hair_attach": 0,          # Hair rotates with head to stay attached
             "guitar_mount": 0,        # Not visible anyway
         },
         hidden_parts=["guitar_torso"]
@@ -138,6 +142,7 @@ def get_attack_strike_pose():
             "hip_left": 30,
             "hip_right": -30,
             "neck": -15,
+            "hair_attach": 0,          # Hair rotates with head to stay attached
             "guitar_mount": 0,        # Not visible anyway
         },
         hidden_parts=["guitar_torso"]

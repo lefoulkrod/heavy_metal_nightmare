@@ -481,57 +481,95 @@ def create_metal_torso(name: str = "torso", width: int = 55, height: int = 75) -
     return part
 
 
+def create_metal_back_hair(name: str = "back_hair", size: int = 48) -> Part:
+    """Create the back hair that flows behind the head and torso."""
+    hair_height = size + 50  # Extra height for longer flowing hair
+    part = Part(
+        name=name,
+        width=size + 20,  # Slightly wider for volume
+        height=hair_height,
+        pivot_x=0.5,
+        pivot_y=1.0,  # Pivot at BOTTOM where it attaches to neck (hair flows UP from neck)
+        color=METAL_COLORS['vibrant_red'],
+        z_index=-2  # Render behind everything
+    )
+    
+    def create_back_hair_image():
+        img = Image.new('RGBA', (size + 20, hair_height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        
+        hair_color = METAL_COLORS['vibrant_red']
+        highlight = (220, 40, 40)
+        shadow = (150, 0, 0)
+        
+        w = size + 20
+        h = hair_height
+        
+        # Back hair flows UP from the neck attachment point (bottom of image)
+        # This creates long hair that extends behind the head and body
+        back_hair_points = [
+            (w//2 - 10, h),           # Bottom center-left (near neck)
+            (w//2 + 10, h),           # Bottom center-right (near neck)
+            (w - 5, h - 20),          # Lower right
+            (w - 8, h//3),            # Upper right
+            (w//2 + 5, 5),             # Top right
+            (w//2, 0),                 # Top center (highest point behind head)
+            (w//2 - 5, 5),             # Top left
+            (8, h//3),                # Upper left
+            (5, h - 20),              # Lower left
+        ]
+        draw.polygon(back_hair_points, fill=hair_color, outline=shadow, width=2)
+        
+        # Side strands flowing down
+        # Left side
+        left_strand = [
+            (10, h - 15),
+            (0, h//2),
+            (8, 15),
+            (15, h//2),
+        ]
+        draw.polygon(left_strand, fill=hair_color, outline=shadow, width=1)
+        
+        # Right side
+        right_strand = [
+            (w - 10, h - 15),
+            (w, h//2),
+            (w - 8, 15),
+            (w - 15, h//2),
+        ]
+        draw.polygon(right_strand, fill=hair_color, outline=shadow, width=1)
+        
+        # Highlight strands for depth
+        draw.line([(w//2 - 5, 10), (w//2 - 8, h//2)], fill=highlight, width=2)
+        draw.line([(w//2 + 5, 10), (w//2 + 8, h//2)], fill=highlight, width=2)
+        
+        return img
+    
+    part.create_image = create_back_hair_image
+    return part
+
+
 def create_metal_head(name: str = "head", size: int = 48) -> Part:
-    """Create a metal warrior head with long flowing vibrant red hair."""
+    """Create a metal warrior head with top hair and bangs (back hair is separate)."""
     part = Part(
         name=name,
         width=size,
-        height=size + 35,  # Extra height for longer hair
+        height=size,  # Just face size, no extra hair height
         pivot_x=0.5,
-        pivot_y=0.65,  # Lower pivot for hair
-        color=METAL_COLORS['skin']
+        pivot_y=1.0,  # Pivot at bottom where it attaches to neck
+        color=METAL_COLORS['skin'],
+        z_index=0  # Default z-index, renders in front of torso
     )
     
     def create_head_image():
-        img = Image.new('RGBA', (size, size + 35), (0, 0, 0, 0))
+        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         
         face_size = size
         
-        # Long flowing vibrant red hair - BEHIND the head
+        # Hair colors
         hair_color = METAL_COLORS['vibrant_red']
         hair_highlight = (230, 50, 50)  # Lighter red for highlights
-        
-        # BACK HAIR - flows behind the head, not in front of face
-        # This is the hair that goes down the back
-        back_hair_points = [
-            (0, 10),                      # Top left (behind head)
-            (face_size//4, 2),            # Top center-left
-            (face_size*3//4, 2),          # Top center-right
-            (face_size, 10),               # Top right (behind head)
-            (face_size, face_size + 30),   # Bottom right - long flowing back
-            (face_size//2, face_size + 35), # Bottom center point
-            (0, face_size + 30)            # Bottom left - long flowing back
-        ]
-        draw.polygon(back_hair_points, fill=hair_color, 
-                    outline=(150, 0, 0), width=2)
-        
-        # Side hair strands - flowing to the sides, NOT in front of face
-        # Left side hair
-        left_side_hair = [
-            (0, 15),
-            (-5, face_size//2),
-            (0, face_size + 20)
-        ]
-        draw.polygon(left_side_hair, fill=hair_color, outline=(150, 0, 0), width=1)
-        
-        # Right side hair
-        right_side_hair = [
-            (face_size, 15),
-            (face_size + 5, face_size//2),
-            (face_size, face_size + 20)
-        ]
-        draw.polygon(right_side_hair, fill=hair_color, outline=(150, 0, 0), width=1)
         
         # Top hair volume - covers top of head
         top_hair_points = [
@@ -544,7 +582,7 @@ def create_metal_head(name: str = "head", size: int = 48) -> Part:
         ]
         draw.polygon(top_hair_points, fill=hair_color, outline=(150, 0, 0), width=1)
         
-        # Side-swept bangs - frame the face from above, NOT below
+        # Side-swept bangs - frame the face from above
         # Left bang - swept to the side
         left_bang = [
             (face_size//6, 5),
